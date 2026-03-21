@@ -33,31 +33,29 @@
           then inputs.pub.lib.${system}.mkJailedAgents {inherit (inputs) llm-agents;}
           else {};
 
-        spec-driver = pkgs.python3Packages.buildPythonApplication {
-          pname = "spec-driver";
-          version = builtins.replaceStrings ["\n"] [""] (builtins.readFile ./VERSION);
-          src = ./.;
-          pyproject = true;
-
-          build-system = with pkgs.python3Packages; [hatchling];
-
-          dependencies = with pkgs.python3Packages; [
-            jinja2
-            pyyaml
-            python-frontmatter
-            textual
-            tomlkit
-            typer
-            watchfiles
-          ];
-
-          doCheck = false;
-          meta.mainProgram = "spec-driver";
-        };
+        # spec-driver = pkgs.python3Packages.buildPythonApplication {
+        #   pname = "spec-driver";
+        #   version = builtins.replaceStrings ["\n"] [""] (builtins.readFile ./VERSION);
+        #   src = ./.;
+        #   pyproject = true;
+        #
+        #   build-system = with pkgs.python3Packages; [hatchling];
+        #
+        #   dependencies = with pkgs.python3Packages; [
+        #     jinja2
+        #     pyyaml
+        #     python-frontmatter
+        #     textual
+        #     tomlkit
+        #     typer
+        #     watchfiles
+        #   ];
+        #
+        #   doCheck = false;
+        #   meta.mainProgram = "spec-driver";
+        # };
 
         projectPkgs = with pkgs; [
-          spec-driver
-
           tree-sitter
           prettier
 
@@ -107,7 +105,7 @@
         packages =
           jailPkgs
           // {
-            default = spec-driver;
+            # default = spec-driver;
           };
 
         devshells.default = {
@@ -122,21 +120,15 @@
               watchexec
               prettier
 
-              nodejs_latest
-              bun
-
               # treesitter
               tree-sitter
               tree-sitter-grammars.tree-sitter-python
               pyright
 
               ## go
-              go
-              gomarkdoc
 
               ## diagrams
               d2
-              graphviz
             ])
             ++ lib.optionals isLinux (lib.attrValues jailPkgs);
 
