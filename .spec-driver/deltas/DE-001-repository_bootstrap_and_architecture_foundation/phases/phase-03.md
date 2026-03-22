@@ -4,7 +4,7 @@ slug: "003-adapter-protocols"
 name: "IP-001 Phase 03 — Adapter protocols"
 created: "2026-03-22"
 updated: "2026-03-22"
-status: draft
+status: complete
 kind: phase
 ---
 
@@ -73,14 +73,14 @@ Define pluggable adapter protocols for harness and session backend. Implement Cl
 
 ## 4. Exit Criteria / Done When
 
-- [ ] `HarnessAdapter` protocol in `autobahn/adapters/harness/protocol.py`
-- [ ] `SessionBackend` protocol in `autobahn/adapters/session/protocol.py`
-- [ ] Extension seams (`ContextEngineerable`, `SubAgentConfigurable`)
-- [ ] `ClaudeCodeAdapter` in `autobahn/adapters/harness/claude_code.py`
-- [ ] `SubprocessBackend` in `autobahn/adapters/session/subprocess_backend.py`
-- [ ] Unit tests for both concrete adapters
-- [ ] Import coupling: adapters/ imports only from models/
-- [ ] `just check` passes
+- [x] `HarnessAdapter` protocol in `autobahn/adapters/harness/protocol.py`
+- [x] `SessionBackend` protocol in `autobahn/adapters/session/protocol.py`
+- [x] Extension seams (`ContextEngineerable`, `SubAgentConfigurable`)
+- [x] `ClaudeCodeAdapter` in `autobahn/adapters/harness/claude_code.py`
+- [x] `SubprocessBackend` in `autobahn/adapters/session/subprocess_backend.py`
+- [x] Unit tests for both concrete adapters (10 + 11 = 21 tests)
+- [x] Import coupling: 5 coupling tests pass (adapters import only models/)
+- [x] `just check` passes — 76 tests total
 
 ## 5. Verification
 
@@ -97,10 +97,10 @@ Define pluggable adapter protocols for harness and session backend. Implement Cl
 
 | Status | ID  | Description | Parallel? | Notes |
 |--------|-----|-------------|-----------|-------|
-| [ ] | 3.1 | Define adapter protocols | - | HarnessAdapter, SessionBackend, extensions |
-| [ ] | 3.2 | Implement Claude Code harness adapter | [P] | Can parallel with 3.3 |
-| [ ] | 3.3 | Implement subprocess session backend | [P] | Can parallel with 3.2 |
-| [ ] | 3.4 | Verify all tests pass | - | Depends on all above |
+| [x] | 3.1 | Define adapter protocols | - | HarnessAdapter, SessionBackend, 2 extension seams |
+| [x] | 3.2 | Implement Claude Code harness adapter | [P] | 10 unit tests |
+| [x] | 3.3 | Implement subprocess session backend | [P] | 11 async unit tests |
+| [x] | 3.4 | Verify all tests pass | - | 76 total, lint+format clean |
 
 ### Task Details
 
@@ -127,14 +127,17 @@ Define pluggable adapter protocols for harness and session backend. Implement Cl
 
 ## 9. Decisions & Outcomes
 
-_(filled during execution)_
+- `uv run pytest` resolves to nix-provided pytest which lacks project deps. Fixed Justfile to use `uv run python -m pytest` which correctly uses the venv Python.
+- All Protocol classes use `@runtime_checkable` for isinstance() checks per DR-001 §7
+- SubprocessBackend stores processes in-memory dict — adequate for v1 single-orchestrator (DEC-011)
 
 ## 10. Findings / Research Notes
 
-_(filled during execution)_
+- nix devshell provides a system pytest that shadows the venv's — `python -m pytest` is the reliable invocation pattern
+- ruff auto-fixed inline imports to top-level in test files (PLC0415)
 
 ## 11. Wrap-up Checklist
 
-- [ ] Exit criteria satisfied
-- [ ] Verification evidence stored
+- [x] Exit criteria satisfied
+- [x] Verification evidence stored (76 tests, just check green)
 - [ ] Hand-off notes to Phase 04

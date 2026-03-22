@@ -1,7 +1,7 @@
 check: format lint test
 
 test:
-  uv run pytest
+  uv run python -m pytest
 
 lint:
   uv run ruff check --fix autobahn tests
