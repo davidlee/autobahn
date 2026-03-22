@@ -1,1 +1,230 @@
-deltas: {}
+deltas:
+  DE-001:
+    kind: delta
+    status: completed
+    name: Delta - Repository bootstrap and architecture foundation
+    slug: repository_bootstrap_and_architecture_foundation
+    updated: '2026-03-22'
+    path: .spec-driver/deltas/DE-001-repository_bootstrap_and_architecture_foundation/DE-001.md
+    applies_to:
+      specs: []
+      requirements: []
+    relations:
+    - type: relates_to
+      target: spec-driver:DE-107
+      attributes:
+        note: "pydantic investigation \u2014 may provide typed models for artifact\
+          \ contract"
+    plan:
+      id: IP-001
+      overview:
+        schema: supekku.plan.overview
+        version: 1
+        plan: IP-001
+        delta: DE-001
+        revision_links:
+          aligns_with:
+          - DR-001
+        specs:
+          primary: []
+          collaborators: []
+        requirements:
+          targets: []
+          dependencies: []
+        phases:
+        - id: IP-001.PHASE-01
+        - id: IP-001.PHASE-02
+        - id: IP-001.PHASE-03
+        - id: IP-001.PHASE-04
+        - id: IP-001.PHASE-05
+      phases:
+      - schema: supekku.phase.overview
+        version: 1
+        phase: IP-001.PHASE-01
+        plan: IP-001
+        delta: DE-001
+        objective: Establish a functional Python package with hatch build system,
+          linting, test infrastructure, and empty package skeleton matching spec-driver
+          conventions. After this phase, `uv run pytest` and `ruff check` pass.
+        entrance_criteria:
+        - DE-001 scoped
+        - DR-001 reviewed (3 adversarial passes + DR-109 coherence)
+        exit_criteria:
+        - hatch build system functional (uv run python -c "import autobahn")
+        - ruff check passes with zero warnings
+        - ruff format --check passes
+        - "pytest runs (zero tests is OK \u2014 infrastructure only)"
+        - pyproject.toml clean (no supekku references, correct metadata)
+        - Justfile has basic commands (check, lint, format, test)
+        verification:
+          tests: []
+          evidence:
+          - uv run python -c 'import autobahn' succeeds
+          - ruff check passes
+          - uv run pytest passes (0 collected is OK)
+        tasks:
+        - id: '1.1'
+          description: Fix and modernise pyproject.toml
+        - id: '1.2'
+          description: Create package skeleton
+        - id: '1.3'
+          description: Configure Justfile
+        - id: '1.4'
+          description: Verify build + lint + test infrastructure
+        risks: []
+      - schema: supekku.phase.overview
+        version: 1
+        phase: IP-001.PHASE-02
+        plan: IP-001
+        delta: DE-001
+        objective: Typed pydantic models (enums, artifact file models, runtime models,
+          error taxonomy) and an artifact loader that reads spec-driver workflow YAML
+          files. Validated by contract tests against hand-maintained fixtures.
+        entrance_criteria:
+        - Phase 01 complete (hatch build, ruff, pytest functional)
+        exit_criteria:
+        - "All enums from DR-001 \xA76 implemented with contract test coverage"
+        - Artifact file models (state, handoff, review-index, review-findings, sessions)
+          parse fixtures
+        - Runtime models (WorkflowContext, TransitionPlan, LaunchSpec, SessionHandle,
+          SessionMetadata, SessionOutcome, RuntimePolicy, OperationResult) defined
+        - Error taxonomy defined (AutobahnError hierarchy)
+        - Artifact loader reads workflow directory into WorkflowContext
+        - Contract tests pass against hand-maintained YAML fixtures (VA-001)
+        - Artifact loader tests pass (VA-002)
+        - ruff check + ruff format --check pass
+        - just check passes
+        verification:
+          tests:
+          - VA-001 contract tests (enum values, model parsing against fixtures)
+          - VA-002 artifact loader tests (read workflow dir, missing files, malformed
+            YAML)
+          evidence:
+          - just check passes
+          - Contract tests validate all enum values match spec-driver source
+          - Artifact models parse all fixture files without error
+        tasks:
+        - id: '2.1'
+          description: Create YAML contract test fixtures
+        - id: '2.2'
+          description: Implement enums
+        - id: '2.3'
+          description: Implement artifact file models
+        - id: '2.4'
+          description: Implement runtime models and error taxonomy
+        - id: '2.5'
+          description: Implement artifact loader
+        - id: '2.6'
+          description: Verify all tests pass
+        risks:
+        - description: Hand-maintained fixtures may not match current spec-driver
+            schemas
+          mitigation: Fixtures note source commit; contract tests catch drift
+      - schema: supekku.phase.overview
+        version: 1
+        phase: IP-001.PHASE-03
+        plan: IP-001
+        delta: DE-001
+        objective: Define HarnessAdapter and SessionBackend protocols. Implement one
+          concrete harness adapter (Claude Code) and one session backend (subprocess).
+          Extension protocol seams for richer harnesses (pi-mono).
+        entrance_criteria:
+        - Phase 02 complete (models + artifacts)
+        exit_criteria:
+        - HarnessAdapter protocol defined with name, is_available, launch_spec, parse_exit
+        - SessionBackend protocol defined with is_available, create, is_alive, terminate,
+          get_metadata
+        - Extension protocol seams defined (ContextEngineerable, SubAgentConfigurable)
+        - Claude Code harness adapter passes unit tests
+        - Subprocess session backend passes unit tests
+        - Adapters depend only on models/ (coupling rule)
+        - just check passes
+        verification:
+          tests:
+          - Claude Code adapter unit tests
+          - Subprocess backend async unit tests
+          - Import coupling test
+          evidence:
+          - just check passes
+        tasks:
+        - id: '3.1'
+          description: Define adapter protocols
+        - id: '3.2'
+          description: Implement Claude Code harness adapter
+        - id: '3.3'
+          description: Implement subprocess session backend
+        - id: '3.4'
+          description: Verify all tests pass
+        risks:
+        - description: Subprocess backend async testing complexity
+          mitigation: Use asyncio subprocess with short-lived echo commands
+      - schema: supekku.phase.overview
+        version: 1
+        phase: IP-001.PHASE-04
+        plan: IP-001
+        delta: DE-001
+        objective: Supervisor coordinating harness + backend, public API functions
+          (check_prerequisites, load_context, transition_from_handoff, spawn_role_session,
+          observe_session, terminate_session, reconcile), and ReconciliationReport
+          model.
+        entrance_criteria:
+        - Phase 03 complete (adapter protocols + concrete implementations)
+        exit_criteria:
+        - "Supervisor class coordinates harness + backend per DR-001 \xA77"
+        - "Public API functions per DR-001 \xA78 pass with mock adapters (VA-003)"
+        - transition_from_handoff computes correct plan from context
+        - reconcile detects drift between artifact state and session state
+        - autobahn.api module exports all public functions
+        - just check passes
+        verification:
+          tests:
+          - VA-003 API function tests with mock adapters
+          - Supervisor unit tests
+          - Transition logic tests
+          - Reconciliation drift detection tests
+          evidence:
+          - just check passes
+        tasks:
+        - id: '4.1'
+          description: Implement Supervisor
+        - id: '4.2'
+          description: Implement transition_from_handoff
+        - id: '4.3'
+          description: Implement public API functions
+        - id: '4.4'
+          description: Implement reconciliation
+        - id: '4.5'
+          description: Wire up autobahn.api module
+        - id: '4.6'
+          description: Verify all tests pass
+        risks: []
+      - schema: supekku.phase.overview
+        version: 1
+        phase: IP-001.PHASE-05
+        plan: IP-001
+        delta: DE-001
+        objective: 'End-to-end integration test proving the full session lifecycle
+          with a real subprocess: load_context -> transition_from_handoff -> spawn
+          -> observe -> terminate -> reconcile. Uses Claude Code adapter + subprocess
+          backend against fixture workflow directory.'
+        entrance_criteria:
+        - Phase 04 complete (runtime + public API)
+        exit_criteria:
+        - Integration test exercises full lifecycle with real subprocess (VA-004)
+        - Test uses fixture workflow dir, not mocks
+        - All verification gates pass (just check)
+        - DE-001 acceptance criteria met
+        verification:
+          tests:
+          - VA-004 real subprocess backend integration test
+          evidence:
+          - just check passes
+          - Integration test spawns real process, observes completion, reconciles
+        tasks:
+        - id: '5.1'
+          description: Write end-to-end integration test
+        - id: '5.2'
+          description: Verify all tests pass and acceptance criteria met
+        risks:
+        - description: Subprocess timing sensitivity
+          mitigation: Use fast-completing commands (echo/python -c)
