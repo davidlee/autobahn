@@ -7,11 +7,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+import yaml
 
 from autobahn.api import (
   check_prerequisites,
   load_context,
   observe_session,
+  persist_session_statuses,
+  reconcile,
   spawn_role_session,
   terminate_session,
   transition_from_handoff,
@@ -211,10 +214,21 @@ class TestTransitionFromHandoff:
 # --- spawn_role_session ---
 
 
+def _writable_workflow_dir(tmp_path: Path) -> Path:
+  """Copy fixtures to a writable tmp dir for persistence tests."""
+  workflow_dir = tmp_path / "workflow"
+  workflow_dir.mkdir()
+  for f in FIXTURES.iterdir():
+    if f.is_file():
+      shutil.copy(f, workflow_dir / f.name)
+  return tmp_path
+
+
 class TestSpawnRoleSession:
   @pytest.mark.asyncio
-  async def test_spawn_success(self):
-    ctx = load_context(FIXTURES.parent, workflow_dir="workflow")
+  async def test_spawn_success(self, tmp_path):
+    base = _writable_workflow_dir(tmp_path)
+    ctx = load_context(base)
     plan = transition_from_handoff(ctx)
     result = await spawn_role_session(
       ctx,
@@ -226,6 +240,63 @@ class TestSpawnRoleSession:
     assert result.success is True
     assert result.value is not None
     assert result.value.session_id == "DE-099-reviewer"
+
+  @pytest.mark.asyncio
+  async def test_spawn_writes_sessions_yaml(self, tmp_path):
+    base = _writable_workflow_dir(tmp_path)
+    # Remove existing sessions.yaml so we test fresh creation
+    (base / "workflow" / "sessions.yaml").unlink()
+    ctx = load_context(base)
+    plan = transition_from_handoff(ctx)
+    result = await spawn_role_session(
+      ctx,
+      plan,
+      policy=_policy(),
+      harness=MockHarness(),
+      backend=MockBackend(),
+    )
+    assert result.success is True
+    assert result.warnings == []
+    sessions_path = base / "workflow" / "sessions.yaml"
+    assert sessions_path.exists()
+    data = yaml.safe_load(sessions_path.read_text())
+    assert len(data["sessions"]) == 1
+    assert data["sessions"][0]["session_id"] == "DE-099-reviewer"
+    assert data["sessions"][0]["role"] == "reviewer"
+    assert data["sessions"][0]["status"] == "active"
+
+  @pytest.mark.asyncio
+  async def test_spawn_appends_to_existing_sessions(self, tmp_path):
+    base = _writable_workflow_dir(tmp_path)
+    ctx = load_context(base)
+    plan = transition_from_handoff(ctx)
+    result = await spawn_role_session(
+      ctx,
+      plan,
+      policy=_policy(),
+      harness=MockHarness(),
+      backend=MockBackend(),
+    )
+    assert result.success is True
+    data = yaml.safe_load((base / "workflow" / "sessions.yaml").read_text())
+    # Original fixture had 1 session, spawn appended another
+    assert len(data["sessions"]) == 2
+
+  @pytest.mark.asyncio
+  async def test_spawn_handle_has_correct_metadata(self, tmp_path):
+    """Verify DEC-023: handle has patched role and artifact_id."""
+    base = _writable_workflow_dir(tmp_path)
+    ctx = load_context(base)
+    plan = transition_from_handoff(ctx)
+    result = await spawn_role_session(
+      ctx,
+      plan,
+      policy=_policy(),
+      harness=MockHarness(),
+      backend=MockBackend(),
+    )
+    assert result.value.role == Role.REVIEWER
+    assert result.value.artifact_id == "DE-099"
 
 
 # --- terminate_session ---
@@ -278,3 +349,98 @@ class TestObserveSession:
     assert len(observations) == 2  # alive, then dead
     assert observations[0].alive is True
     assert observations[-1].alive is False
+
+
+# --- persist_session_statuses ---
+
+
+class TestPersistSessionStatuses:
+  @pytest.mark.asyncio
+  async def test_dead_session_marked_dead(self, tmp_path):
+    """Dead handle → sessions.yaml entry status becomes dead."""
+    base = _writable_workflow_dir(tmp_path)
+    ctx = load_context(base)
+    handle = SessionHandle(
+      session_id="sess-001",
+      role=Role.IMPLEMENTER,
+      artifact_id="DE-099",
+      backend_ref="mock:1",
+      launched_at=datetime.now(tz=UTC),
+    )
+    result = await reconcile(
+      ctx,
+      policy=_policy(),
+      backend=MockBackend(available=True),
+      active_handles=[handle],
+    )
+    # sess-001 is alive but fixture has implementing status → no drift
+    # Kill the backend to create SESSION_DIED_UNEXPECTEDLY
+    backend_dead = MockBackend()
+    backend_dead._alive = False
+    result = await reconcile(
+      ctx,
+      policy=_policy(),
+      backend=backend_dead,
+      active_handles=[handle],
+    )
+    assert result.value.has_drift is True
+    persist_session_statuses(ctx, result.value)
+    data = yaml.safe_load((base / "workflow" / "sessions.yaml").read_text())
+    entry = next(s for s in data["sessions"] if s["session_id"] == "sess-001")
+    assert entry["status"] == "dead"
+
+  @pytest.mark.asyncio
+  async def test_orphaned_session_marked_dead(self, tmp_path):
+    """Orphaned session → sessions.yaml entry status becomes dead."""
+    base = _writable_workflow_dir(tmp_path)
+    ctx = load_context(base)
+    # No handles → sess-001 in sessions.yaml is orphaned
+    result = await reconcile(
+      ctx,
+      policy=_policy(),
+      backend=MockBackend(),
+      active_handles=[],
+    )
+    assert result.value.has_drift is True
+    kinds = [d.kind for d in result.value.drift_items]
+    assert "ORPHANED_SESSION" in kinds
+    persist_session_statuses(ctx, result.value)
+    data = yaml.safe_load((base / "workflow" / "sessions.yaml").read_text())
+    entry = next(s for s in data["sessions"] if s["session_id"] == "sess-001")
+    assert entry["status"] == "dead"
+
+  @pytest.mark.asyncio
+  async def test_alive_session_unchanged(self, tmp_path):
+    """Alive handle with no drift → sessions.yaml entry unchanged."""
+    base = _writable_workflow_dir(tmp_path)
+    # Remove sessions.yaml to avoid orphan detection, then write clean one
+    (base / "workflow" / "sessions.yaml").unlink()
+    ctx = load_context(base)
+    # Spawn a session to create sessions.yaml
+    plan = transition_from_handoff(ctx)
+    await spawn_role_session(
+      ctx,
+      plan,
+      policy=_policy(),
+      harness=MockHarness(),
+      backend=MockBackend(),
+    )
+    # Reload context to pick up the new sessions.yaml
+    ctx = load_context(base)
+    handle = SessionHandle(
+      session_id="DE-099-reviewer",
+      role=Role.REVIEWER,
+      artifact_id="DE-099",
+      backend_ref="mock:1",
+      launched_at=datetime.now(tz=UTC),
+    )
+    result = await reconcile(
+      ctx,
+      policy=_policy(),
+      backend=MockBackend(available=True),
+      active_handles=[handle],
+    )
+    persist_session_statuses(ctx, result.value)
+    data = yaml.safe_load((base / "workflow" / "sessions.yaml").read_text())
+    entry = next(s for s in data["sessions"] if s["session_id"] == "DE-099-reviewer")
+    assert entry["status"] == "active"

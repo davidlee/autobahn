@@ -29,6 +29,7 @@ class DriftItem(BaseModel):
 
   kind: str
   description: str
+  session_id: str | None = None
 
 
 class ReconciliationReport(BaseModel):
@@ -83,6 +84,7 @@ async def reconcile(
               f"Session {handle.session_id} still alive but "
               f"workflow is in terminal state {fresh_status}"
             ),
+            session_id=handle.session_id,
           )
         )
 
@@ -94,6 +96,7 @@ async def reconcile(
               f"Session {handle.session_id} is dead but "
               f"workflow is still {fresh_status}"
             ),
+            session_id=handle.session_id,
           )
         )
 
@@ -111,6 +114,7 @@ async def reconcile(
                 f"sessions.yaml lists {entry.session_id} as active "
                 f"but no matching live handle"
               ),
+              session_id=entry.session_id,
             )
           )
 
