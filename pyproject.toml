@@ -6,8 +6,7 @@ authors = [
     { name = "David Lee", email = "dav@davlee.com" }
 ]
 readme = "README.md"
-long_description_content_type = "text/markdown"
-license = { text = "none" }
+license = { text = "FSL-1.1-ALv2" }
 requires-python = ">=3.12"
 dependencies = [
     "tomlkit>=0.13.0",
@@ -17,6 +16,7 @@ keywords = ["specification", "documentation", "adr", "architecture-decision-reco
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
