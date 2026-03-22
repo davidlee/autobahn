@@ -1,10 +1,15 @@
 """Contract tests for enum values.
 
-Validates that autobahn's enum transcriptions match spec-driver's
+Autobahn-owned transcriptions are validated against spec-driver's
 canonical values from workflow_metadata.py.
+
+Review-related enums are re-exported from spec_driver.orchestration
+(ADR-002, DEC-004-005) — alias identity tests verify the re-export.
 """
 
 from __future__ import annotations
+
+import spec_driver.orchestration as sd
 
 from autobahn.models.enums import (
   ArtifactKind,
@@ -26,6 +31,7 @@ def _values(enum_cls):
   return [m.value for m in enum_cls]
 
 
+# --- Autobahn-owned transcriptions (contract tests) ---
 # Source: supekku/scripts/lib/blocks/workflow_metadata.py L53-93 (2026-03-22)
 
 
@@ -100,42 +106,24 @@ def test_handoff_transition_status_values():
   ]
 
 
-def test_bootstrap_status_values():
-  assert _values(BootstrapStatus) == [
-    "cold",
-    "warm",
-    "stale",
-    "reusable",
-    "invalid",
-  ]
+# --- Re-export alias identity tests (DEC-004-005) ---
 
 
-def test_review_status_values():
-  assert _values(ReviewStatus) == [
-    "not_started",
-    "in_progress",
-    "approved",
-    "changes_requested",
-  ]
+def test_bootstrap_status_is_spec_driver_type():
+  assert BootstrapStatus is sd.BootstrapStatus
 
 
-def test_finding_disposition_action_values():
-  assert _values(FindingDispositionAction) == [
-    "fix",
-    "defer",
-    "waive",
-    "supersede",
-  ]
+def test_review_status_is_spec_driver_type():
+  assert ReviewStatus is sd.ReviewStatus
 
 
-def test_disposition_authority_values():
-  assert _values(DispositionAuthority) == ["user", "agent"]
+def test_finding_disposition_action_is_spec_driver_type():
+  assert FindingDispositionAction is sd.FindingDispositionAction
 
 
-def test_finding_status_values():
-  assert _values(FindingStatus) == [
-    "open",
-    "resolved",
-    "waived",
-    "superseded",
-  ]
+def test_disposition_authority_is_spec_driver_type():
+  assert DispositionAuthority is sd.DispositionAuthority
+
+
+def test_finding_status_is_spec_driver_type():
+  assert FindingStatus is sd.FindingStatus

@@ -28,18 +28,6 @@ class ArtifactContractError(AutobahnError):
   """
 
 
-# External tool layer
-
-
-class ToolInvocationError(AutobahnError):
-  """spec-driver CLI or other external tool failed to execute."""
-
-
-class ToolContractError(AutobahnError):
-  """External tool returned unexpected output format or
-  exit 0 with invalid payload."""
-
-
 # Backend layer
 
 

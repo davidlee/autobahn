@@ -1,17 +1,17 @@
 """Enum transcriptions from spec-driver workflow metadata.
 
-Source: supekku/scripts/lib/blocks/workflow_metadata.py as of 2026-03-22.
-These are cited transcriptions, not autobahn definitions — when spec-driver
-changes values, autobahn's contract tests break and autobahn updates to match.
+Core enums (Role, WorkflowStatus, etc.) are autobahn-owned transcriptions
+validated by contract tests. Review-related enums are re-exported from
+spec-driver's public API (ADR-002, DEC-004-005).
 
-Design authority: DR-001 §6, DEC-019.
+Design authority: DR-001 §6, DEC-019, DR-004 §4.1.
 """
 
 from __future__ import annotations
 
 from enum import StrEnum
 
-# --- Core enums (slice 1) ---
+# --- Core enums (autobahn transcriptions — slice 1) ---
 
 
 class Role(StrEnum):
@@ -92,48 +92,30 @@ class HandoffTransitionStatus(StrEnum):
   SUPERSEDED = "superseded"
 
 
-# --- Review-related enums ---
+# --- Review-related enums (re-exported from spec-driver — ADR-002, DEC-004-005) ---
 
+from spec_driver.orchestration import (  # noqa: E402
+  BootstrapStatus,
+  DispositionAuthority,
+  FindingDispositionAction,
+  FindingStatus,
+  ReviewStatus,
+)
 
-class BootstrapStatus(StrEnum):
-  """Review bootstrap status. Source: BOOTSTRAP_STATUS_VALUES L75-82."""
-
-  COLD = "cold"
-  WARM = "warm"
-  STALE = "stale"
-  REUSABLE = "reusable"
-  INVALID = "invalid"
-
-
-class ReviewStatus(StrEnum):
-  """Review status. Source: REVIEW_STATUS_VALUES L83-89."""
-
-  NOT_STARTED = "not_started"
-  IN_PROGRESS = "in_progress"
-  APPROVED = "approved"
-  CHANGES_REQUESTED = "changes_requested"
-
-
-class FindingDispositionAction(StrEnum):
-  """Finding disposition action. Source: FINDING_DISPOSITION_ACTION_VALUES L91."""
-
-  FIX = "fix"
-  DEFER = "defer"
-  WAIVE = "waive"
-  SUPERSEDE = "supersede"
-
-
-class DispositionAuthority(StrEnum):
-  """Who made the disposition decision. Source: DISPOSITION_AUTHORITY_VALUES L92."""
-
-  USER = "user"
-  AGENT = "agent"
-
-
-class FindingStatus(StrEnum):
-  """Finding lifecycle status. Source: FINDING_STATUS_VALUES L90."""
-
-  OPEN = "open"
-  RESOLVED = "resolved"
-  WAIVED = "waived"
-  SUPERSEDED = "superseded"
+__all__ = [
+  # Autobahn transcriptions
+  "Role",
+  "WorkflowStatus",
+  "TERMINAL_WORKFLOW_STATES",
+  "PhaseStatus",
+  "ArtifactKind",
+  "SessionStatus",
+  "NextActivityKind",
+  "HandoffTransitionStatus",
+  # Re-exports from spec-driver
+  "BootstrapStatus",
+  "ReviewStatus",
+  "FindingDispositionAction",
+  "DispositionAuthority",
+  "FindingStatus",
+]

@@ -20,8 +20,6 @@ from autobahn.models.errors import (
   BackendUnavailableError,
   PreconditionError,
   SessionError,
-  ToolContractError,
-  ToolInvocationError,
 )
 from autobahn.models.runtime import (
   LaunchSpec,
@@ -134,8 +132,6 @@ class TestErrorHierarchy:
     [
       ArtifactParseError,
       ArtifactContractError,
-      ToolInvocationError,
-      ToolContractError,
       BackendUnavailableError,
       BackendTransportError,
       PreconditionError,
