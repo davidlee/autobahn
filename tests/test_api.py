@@ -6,17 +6,32 @@ import logging
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
+from spec_driver.orchestration import (
+  BootstrapStatus,
+  DispositionAuthority,
+  FindingDispositionAction,
+  FindingNotFoundError,
+  FindingsNotFoundError,
+  FindingStatus,
+  PrimeAction,
+  ReviewStatus,
+  StateNotFoundError,
+)
 
 from autobahn.api import (
   check_prerequisites,
+  disposition_finding,
   load_context,
   observe_session,
   persist_session_statuses,
+  prime_review,
   reconcile,
   spawn_role_session,
+  summarize_review_outcome,
   terminate_session,
   transition_from_handoff,
 )
@@ -462,3 +477,128 @@ class TestPersistSessionStatuses:
     persist_session_statuses(ctx, result.value)
     data = yaml.safe_load((base / "workflow" / "sessions.yaml").read_text())
     assert data["sessions"]["reviewer"]["status"] == "active"
+
+
+# --- Review operations (DE-004, Phase 2) ---
+
+
+class TestPrimeReview:
+  """Tests for prime_review — thin wrapper around spec_driver.orchestration."""
+
+  def test_delegates_to_spec_driver(self, tmp_path, monkeypatch):
+    """prime_review calls spec-driver's prime_review with correct args."""
+    mock_result = MagicMock()
+    mock_result.delta_id = "DE-099"
+    mock_result.action = PrimeAction.CREATED
+    mock_result.bootstrap_status = BootstrapStatus.WARM
+    mock_result.judgment_status = ReviewStatus.IN_PROGRESS
+    mock_result.review_round = 1
+    mock_result.index_path = tmp_path / "review-index.yaml"
+    mock_result.bootstrap_path = tmp_path / "review-bootstrap.md"
+
+    mock_fn = MagicMock(return_value=mock_result)
+    monkeypatch.setattr("autobahn.api.functions._sd_prime_review", mock_fn)
+
+    result = prime_review(tmp_path / "delta", tmp_path)
+
+    mock_fn.assert_called_once_with(tmp_path / "delta", tmp_path)
+    assert result is mock_result
+
+  def test_propagates_state_not_found(self, tmp_path, monkeypatch):
+    """spec-driver StateNotFoundError propagates to caller."""
+    mock_fn = MagicMock(side_effect=StateNotFoundError("no state"))
+    monkeypatch.setattr("autobahn.api.functions._sd_prime_review", mock_fn)
+
+    with pytest.raises(StateNotFoundError):
+      prime_review(tmp_path / "delta", tmp_path)
+
+
+class TestSummarizeReviewOutcome:
+  """Tests for summarize_review_outcome — thin wrapper."""
+
+  def test_delegates_to_spec_driver(self, tmp_path, monkeypatch):
+    mock_result = MagicMock()
+    mock_result.current_round = 1
+    mock_result.judgment_status = ReviewStatus.APPROVED
+    mock_result.blocking_total = 2
+    mock_result.blocking_dispositioned = 2
+    mock_result.non_blocking_total = 1
+    mock_result.all_blocking_resolved = True
+    mock_result.outcome_ready = True
+
+    mock_fn = MagicMock(return_value=mock_result)
+    monkeypatch.setattr("autobahn.api.functions._sd_summarize_review", mock_fn)
+
+    result = summarize_review_outcome(tmp_path / "delta")
+
+    mock_fn.assert_called_once_with(tmp_path / "delta")
+    assert result is mock_result
+
+  def test_propagates_findings_not_found(self, tmp_path, monkeypatch):
+    mock_fn = MagicMock(side_effect=FindingsNotFoundError("no findings"))
+    monkeypatch.setattr("autobahn.api.functions._sd_summarize_review", mock_fn)
+
+    with pytest.raises(FindingsNotFoundError):
+      summarize_review_outcome(tmp_path / "delta")
+
+
+class TestDispositionFinding:
+  """Tests for disposition_finding — thin wrapper."""
+
+  def test_delegates_to_spec_driver(self, tmp_path, monkeypatch):
+    mock_result = MagicMock()
+    mock_result.delta_id = "DE-099"
+    mock_result.finding_id = "R1-001"
+    mock_result.action = FindingDispositionAction.FIX
+    mock_result.previous_status = FindingStatus.OPEN
+    mock_result.new_status = FindingStatus.RESOLVED
+
+    mock_fn = MagicMock(return_value=mock_result)
+    monkeypatch.setattr("autobahn.api.functions._sd_disposition_finding", mock_fn)
+
+    result = disposition_finding(
+      tmp_path / "delta",
+      "R1-001",
+      action=FindingDispositionAction.FIX,
+      authority=DispositionAuthority.AGENT,
+      resolved_at="abc123",
+    )
+
+    mock_fn.assert_called_once_with(
+      tmp_path / "delta",
+      "R1-001",
+      action=FindingDispositionAction.FIX,
+      authority=DispositionAuthority.AGENT,
+      rationale=None,
+      backlog_ref=None,
+      resolved_at="abc123",
+      superseded_by=None,
+    )
+    assert result is mock_result
+
+  def test_default_authority_is_agent(self, tmp_path, monkeypatch):
+    mock_fn = MagicMock()
+    monkeypatch.setattr("autobahn.api.functions._sd_disposition_finding", mock_fn)
+
+    disposition_finding(
+      tmp_path / "delta",
+      "R1-001",
+      action=FindingDispositionAction.WAIVE,
+      rationale="acceptable risk",
+    )
+
+    call_kwargs = mock_fn.call_args
+    assert call_kwargs.kwargs["authority"] == DispositionAuthority.AGENT
+
+  def test_propagates_finding_not_found(self, tmp_path, monkeypatch):
+    mock_fn = MagicMock(
+      side_effect=FindingNotFoundError("R1-999", ["R1-001", "R1-002"])
+    )
+    monkeypatch.setattr("autobahn.api.functions._sd_disposition_finding", mock_fn)
+
+    with pytest.raises(FindingNotFoundError):
+      disposition_finding(
+        tmp_path / "delta",
+        "R1-999",
+        action=FindingDispositionAction.FIX,
+      )

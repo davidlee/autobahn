@@ -1,6 +1,6 @@
 """Public API function implementations.
 
-Design authority: DR-001 §8, DR-002 §4.6/§4.8.
+Design authority: DR-001 §8, DR-002 §4.6/§4.8, DR-004 §4.5.
 """
 
 from __future__ import annotations
@@ -9,6 +9,23 @@ import asyncio
 import logging
 from collections.abc import AsyncIterator
 from pathlib import Path
+
+from spec_driver.orchestration import (
+  DispositionAuthority,
+  DispositionResult,
+  FindingDispositionAction,
+  PrimeResult,
+  ReviewSummary,
+)
+from spec_driver.orchestration import (
+  disposition_finding as _sd_disposition_finding,
+)
+from spec_driver.orchestration import (
+  prime_review as _sd_prime_review,
+)
+from spec_driver.orchestration import (
+  summarize_review as _sd_summarize_review,
+)
 
 from autobahn.adapters.harness.protocol import HarnessAdapter
 from autobahn.adapters.session.protocol import SessionBackend
@@ -245,3 +262,77 @@ def persist_session_statuses(
   if changed:
     sf = context.sessions.model_copy(update={"sessions": new_sessions})
     write_sessions_file(sessions_path, sf)
+
+
+# --- Review operations (DR-004, ADR-002) ---
+
+
+def prime_review(
+  delta_dir: Path,
+  repo_root: Path,
+) -> PrimeResult:
+  """Prime a review via spec-driver.
+
+  Evaluates staleness, builds/refreshes review index, writes
+  review-index.yaml + review-bootstrap.md, transitions judgment
+  to in_progress.
+
+  Design authority: DR-004 §4.5, DEC-004-002.
+
+  Raises:
+    spec_driver.orchestration.StateNotFoundError
+    spec_driver.orchestration.StateValidationError
+    spec_driver.orchestration.ReviewIndexValidationError
+  """
+  return _sd_prime_review(delta_dir, repo_root)
+
+
+def summarize_review_outcome(
+  delta_dir: Path,
+) -> ReviewSummary:
+  """Query review findings and return outcome digest.
+
+  Design authority: DR-004 §4.5, DEC-004-003.
+
+  Raises:
+    spec_driver.orchestration.FindingsNotFoundError
+    spec_driver.orchestration.FindingsVersionError
+    spec_driver.orchestration.ReviewIndexNotFoundError
+  """
+  return _sd_summarize_review(delta_dir)
+
+
+def disposition_finding(
+  delta_dir: Path,
+  finding_id: str,
+  *,
+  action: FindingDispositionAction,
+  authority: DispositionAuthority = DispositionAuthority.AGENT,
+  rationale: str | None = None,
+  backlog_ref: str | None = None,
+  resolved_at: str | None = None,
+  superseded_by: str | None = None,
+) -> DispositionResult:
+  """Disposition a review finding.
+
+  Constraint validation (rationale for waive, backlog_ref for
+  blocking defer, etc.) is enforced by spec-driver's operation.
+
+  Design authority: DR-004 §4.5, DEC-004-004, DEC-004-011.
+
+  Raises:
+    spec_driver.orchestration.FindingsNotFoundError
+    spec_driver.orchestration.FindingsVersionError
+    spec_driver.orchestration.FindingNotFoundError
+    spec_driver.orchestration.DispositionValidationError
+  """
+  return _sd_disposition_finding(
+    delta_dir,
+    finding_id,
+    action=action,
+    authority=authority,
+    rationale=rationale,
+    backlog_ref=backlog_ref,
+    resolved_at=resolved_at,
+    superseded_by=superseded_by,
+  )
