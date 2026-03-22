@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /home/david/dev/autobahn/*.py)",
+      "Bash(spec-driver list:*)",
+      "Bash(ls:*)",
+      "Bash(find .spec-driver/deltas/DE-107* -type f)",
+      "Bash(gh api:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(spec-driver show:*)"
+    ]
+  }
+}
