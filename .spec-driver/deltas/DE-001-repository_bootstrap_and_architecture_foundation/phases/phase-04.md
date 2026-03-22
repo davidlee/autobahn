@@ -4,7 +4,7 @@ slug: "004-runtime-and-public-api"
 name: "IP-001 Phase 04 — Runtime and public API"
 created: "2026-03-22"
 updated: "2026-03-22"
-status: draft
+status: complete
 kind: phase
 ---
 
@@ -76,14 +76,14 @@ Wire together adapters with a Supervisor, implement transition logic and reconci
 
 ## 4. Exit Criteria / Done When
 
-- [ ] `Supervisor` in `autobahn/runtime/supervisor.py`
-- [ ] `transition_from_handoff` computes TransitionPlan from WorkflowContext
-- [ ] Public API: check_prerequisites, load_context, transition_from_handoff, spawn_role_session, observe_session, terminate_session, reconcile
-- [ ] ReconciliationReport model defined
-- [ ] `from autobahn.api import ...` works for all public functions
-- [ ] API function tests with mock adapters (VA-003)
-- [ ] Reconciliation detects drift
-- [ ] `just check` passes
+- [x] `Supervisor` in `autobahn/runtime/supervisor.py`
+- [x] `transition_from_handoff` computes TransitionPlan from WorkflowContext
+- [x] Public API: all 7 functions implemented
+- [x] ReconciliationReport + DriftItem models defined
+- [x] `from autobahn.api import ...` works for all public functions
+- [x] API function tests with mock adapters (VA-003) — 13 tests
+- [x] Reconciliation detects 4 drift types (state changed, session outlived, session died, orphaned)
+- [x] `just check` passes — 94 tests
 
 ## 5. Verification
 
@@ -101,12 +101,12 @@ Wire together adapters with a Supervisor, implement transition logic and reconci
 
 | Status | ID  | Description | Parallel? | Notes |
 |--------|-----|-------------|-----------|-------|
-| [ ] | 4.1 | Implement Supervisor | - | Coordinates harness + backend |
-| [ ] | 4.2 | Implement transition_from_handoff | [P] | Can parallel with 4.1 |
-| [ ] | 4.3 | Implement public API functions | - | Depends on 4.1, 4.2 |
-| [ ] | 4.4 | Implement reconciliation | [P] | Can parallel with 4.3 |
-| [ ] | 4.5 | Wire up autobahn.api module | - | Depends on 4.3, 4.4 |
-| [ ] | 4.6 | Verify all tests pass | - | Depends on all above |
+| [x] | 4.1 | Implement Supervisor | - | spawn/observe/terminate |
+| [x] | 4.2 | Implement transition_from_handoff | [P] | Terminal state + missing handoff checks |
+| [x] | 4.3 | Implement public API functions | - | 7 functions, 13 API tests |
+| [x] | 4.4 | Implement reconciliation | [P] | 4 drift types, 5 tests |
+| [x] | 4.5 | Wire up autobahn.api module | - | All 7 functions exportable |
+| [x] | 4.6 | Verify all tests pass | - | 94 total, lint+format clean |
 
 ### Task Details
 
@@ -138,14 +138,17 @@ Wire together adapters with a Supervisor, implement transition logic and reconci
 
 ## 9. Decisions & Outcomes
 
-_(filled during execution)_
+- `observe_session` wraps `Supervisor.observe` as an async generator — avoids exposing Supervisor in the public API
+- `ReconciliationReport` and `DriftItem` defined in reconcile.py alongside the logic (not in models/) — they're runtime-specific, not shared
+- Reconciliation doesn't remove `Path` import from unused (removed from models/runtime.py)
 
 ## 10. Findings / Research Notes
 
-_(filled during execution)_
+- Async generators work cleanly with pytest-asyncio — no special fixtures needed
+- Mock adapters pattern is clean: define in test file, Protocol structural typing validates them automatically
 
 ## 11. Wrap-up Checklist
 
-- [ ] Exit criteria satisfied
-- [ ] Verification evidence stored
+- [x] Exit criteria satisfied
+- [x] Verification evidence stored (94 tests, just check green)
 - [ ] Hand-off notes to Phase 05
