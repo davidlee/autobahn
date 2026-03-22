@@ -228,3 +228,109 @@ deltas:
         risks:
         - description: Subprocess timing sensitivity
           mitigation: Use fast-completing commands (echo/python -c)
+  DE-002:
+    kind: delta
+    status: completed
+    name: Delta - Internal hardening and session persistence
+    slug: internal_hardening_and_session_persistence
+    updated: '2026-03-22'
+    path: .spec-driver/deltas/DE-002-internal_hardening_and_session_persistence/DE-002.md
+    applies_to:
+      specs: []
+      requirements: []
+    relations:
+    - type: follows
+      target: DE-001
+      attributes:
+        note: Closes AUD-001 findings F-001, F-002, F-005, F-007, F-011
+    plan:
+      id: IP-002
+      overview:
+        schema: supekku.plan.overview
+        version: 1
+        plan: IP-002
+        delta: DE-002
+        revision_links:
+          aligns_with:
+          - DR-002
+        specs:
+          primary: []
+          collaborators: []
+        requirements:
+          targets: []
+          dependencies: []
+        phases:
+        - id: IP-002.PHASE-01
+        - id: IP-002.PHASE-02
+      phases:
+      - schema: supekku.phase.overview
+        version: 1
+        phase: IP-002.PHASE-01
+        plan: IP-002
+        delta: DE-002
+        objective: Schema validation in loader, extract shared constants, refactor
+          Supervisor (remove observe, patch handle metadata). No new write paths.
+        entrance_criteria:
+        - DR-002 reviewed (2 adversarial rounds)
+        exit_criteria:
+        - SCHEMA_VERSIONS in artifacts/schema.py
+        - Loader validates schema markers for all files
+        - Observe inlined in api/functions.py
+        - Supervisor.spawn patches handle metadata
+        - TERMINAL_WORKFLOW_STATES shared constant
+        - just check passes
+        verification:
+          tests:
+          - Schema validation acceptance + rejection tests
+          - "Regression \u2014 all 96 existing tests pass"
+          evidence:
+          - just check passes
+        tasks:
+        - id: '1.1'
+          description: Create artifacts/schema.py
+        - id: '1.2'
+          description: Add schema validation to loader
+        - id: '1.3'
+          description: TERMINAL_WORKFLOW_STATES + update consumers
+        - id: '1.4'
+          description: Refactor Supervisor + inline observe
+        - id: '1.5'
+          description: Verify all tests pass
+        risks: []
+      - schema: supekku.phase.overview
+        version: 1
+        phase: IP-002.PHASE-02
+        plan: IP-002
+        delta: DE-002
+        objective: Sessions.yaml writer, DriftItem.session_id, spawn persistence,
+          persist_session_statuses. autobahn can now persist and update session state.
+        entrance_criteria:
+        - Phase 01 complete (schema validation, Supervisor refactor)
+        exit_criteria:
+        - write_sessions_file() in artifacts/writer.py with atomic rename
+        - DriftItem gains session_id field; reconcile populates it
+        - spawn_role_session writes to sessions.yaml (DEC-026 error handling)
+        - persist_session_statuses (sync, report-driven) updates dead/orphaned sessions
+        - Round-trip test via load_workflow_dir (VA-005)
+        - just check passes
+        verification:
+          tests:
+          - VA-005 writer tests (atomic write, round-trip, empty sessions)
+          - "VA-003 updated \u2014 spawn writes, persist_session_statuses 3 cases"
+          - Integration test updated if needed
+          evidence:
+          - just check passes
+        tasks:
+        - id: '2.1'
+          description: Implement write_sessions_file in artifacts/writer.py
+        - id: '2.2'
+          description: Add session_id to DriftItem, update reconcile
+        - id: '2.3'
+          description: Spawn persistence in api/functions.py
+        - id: '2.4'
+          description: Implement persist_session_statuses
+        - id: '2.5'
+          description: Verify all tests pass
+        risks:
+        - description: Datetime YAML round-trip
+          mitigation: VA-005 round-trip test covers this explicitly
