@@ -115,7 +115,7 @@ def _persist_new_session(
   harness_name: str,
   result: OperationResult[SessionHandle],
 ) -> None:
-  """Append session entry to sessions.yaml. Warns on failure."""
+  """Write session entry to sessions.yaml. Warns on failure."""
   sessions_path = context.artifact_dir / "sessions.yaml"
   try:
     if context.sessions is not None:
@@ -126,18 +126,25 @@ def _persist_new_session(
           id=context.artifact_id,
           kind=context.artifact_kind,
         ),
-        sessions=[],
+      )
+    role_key = handle.role.value
+    existing = sf.sessions.get(role_key)
+    if existing is not None and existing.status == SessionStatus.ACTIVE:
+      logger.warning(
+        "Overwriting active session for role %s (session_name=%s)",
+        role_key,
+        existing.session_name,
       )
     entry = SessionEntry(
-      session_id=handle.session_id,
-      role=handle.role,
+      session_name=handle.session_id,
       status=SessionStatus.ACTIVE,
+      last_seen=handle.launched_at,
       backend=harness_name,
       launched_at=handle.launched_at,
     )
     sf = sf.model_copy(
       update={
-        "sessions": [*sf.sessions, entry],
+        "sessions": {**sf.sessions, role_key: entry},
       }
     )
     write_sessions_file(sessions_path, sf)
@@ -227,14 +234,14 @@ def persist_session_statuses(
     return
 
   changed = False
-  new_entries: list[SessionEntry] = []
-  for entry in context.sessions.sessions:
-    if entry.session_id in dead_ids and entry.status == SessionStatus.ACTIVE:
-      new_entries.append(entry.model_copy(update={"status": SessionStatus.DEAD}))
+  new_sessions: dict[str, SessionEntry] = {}
+  for role, entry in context.sessions.sessions.items():
+    if entry.session_name in dead_ids and entry.status == SessionStatus.ACTIVE:
+      new_sessions[role] = entry.model_copy(update={"status": SessionStatus.DEAD})
       changed = True
     else:
-      new_entries.append(entry)
+      new_sessions[role] = entry
 
   if changed:
-    sf = context.sessions.model_copy(update={"sessions": new_entries})
+    sf = context.sessions.model_copy(update={"sessions": new_sessions})
     write_sessions_file(sessions_path, sf)

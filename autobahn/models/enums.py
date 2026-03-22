@@ -92,36 +92,26 @@ class HandoffTransitionStatus(StrEnum):
   SUPERSEDED = "superseded"
 
 
-# --- Review-related enums (provisional — DE-109 may change) ---
+# --- Review-related enums ---
 
 
 class BootstrapStatus(StrEnum):
-  """Review bootstrap status. Source: BOOTSTRAP_STATUS_VALUES L75-82.
-
-  Note: DE-109 removes 'warming' (DEC-109-002). Current transcription
-  includes it for compatibility until DE-109 lands.
-  """
+  """Review bootstrap status. Source: BOOTSTRAP_STATUS_VALUES L75-82."""
 
   COLD = "cold"
-  WARMING = "warming"
   WARM = "warm"
   STALE = "stale"
-  INVALID = "invalid"
   REUSABLE = "reusable"
+  INVALID = "invalid"
 
 
 class ReviewStatus(StrEnum):
-  """Review status. Source: REVIEW_STATUS_VALUES L83-89.
-
-  Note: DE-109 removes 'blocked' (DEC-109-003). Current transcription
-  includes it for compatibility until DE-109 lands.
-  """
+  """Review status. Source: REVIEW_STATUS_VALUES L83-89."""
 
   NOT_STARTED = "not_started"
   IN_PROGRESS = "in_progress"
-  CHANGES_REQUESTED = "changes_requested"
   APPROVED = "approved"
-  BLOCKED = "blocked"
+  CHANGES_REQUESTED = "changes_requested"
 
 
 class FindingDispositionAction(StrEnum):

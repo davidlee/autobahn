@@ -103,11 +103,10 @@ def test_handoff_transition_status_values():
 def test_bootstrap_status_values():
   assert _values(BootstrapStatus) == [
     "cold",
-    "warming",
     "warm",
     "stale",
-    "invalid",
     "reusable",
+    "invalid",
   ]
 
 
@@ -115,9 +114,8 @@ def test_review_status_values():
   assert _values(ReviewStatus) == [
     "not_started",
     "in_progress",
-    "changes_requested",
     "approved",
-    "blocked",
+    "changes_requested",
   ]
 
 

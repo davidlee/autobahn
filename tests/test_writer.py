@@ -9,9 +9,12 @@ from pathlib import Path
 import yaml
 
 from autobahn.artifacts.loader import load_workflow_dir
-from autobahn.artifacts.writer import write_sessions_file
+from autobahn.artifacts.writer import (
+  _REQUIRED_SESSION_FIELDS,
+  write_sessions_file,
+)
 from autobahn.models.artifacts import ArtifactBlock, SessionEntry, SessionsFile
-from autobahn.models.enums import ArtifactKind, Role, SessionStatus
+from autobahn.models.enums import ArtifactKind, SessionStatus
 
 FIXTURES = Path(__file__).parent / "fixtures" / "workflow"
 
@@ -22,9 +25,9 @@ def _artifact_block() -> ArtifactBlock:
 
 def _session_entry(**overrides) -> SessionEntry:
   defaults = {
-    "session_id": "DE-099-implementer",
-    "role": Role.IMPLEMENTER,
+    "session_name": "DE-099-implementer",
     "status": SessionStatus.ACTIVE,
+    "last_seen": datetime(2026, 3, 22, 14, 0, tzinfo=UTC),
     "backend": "subprocess",
     "launched_at": datetime(2026, 3, 22, 14, 0, tzinfo=UTC),
     "harness": "claude_code",
@@ -38,7 +41,7 @@ class TestWriteSessionsFile:
     path = tmp_path / "sessions.yaml"
     sf = SessionsFile(
       artifact=_artifact_block(),
-      sessions=[_session_entry()],
+      sessions={"implementer": _session_entry()},
     )
     write_sessions_file(path, sf)
     assert path.exists()
@@ -51,44 +54,62 @@ class TestWriteSessionsFile:
 
     sf = SessionsFile(
       artifact=_artifact_block(),
-      sessions=[_session_entry()],
+      sessions={"implementer": _session_entry()},
     )
     write_sessions_file(tmp_path / "sessions.yaml", sf)
 
     ctx = load_workflow_dir(tmp_path)
     assert ctx.sessions is not None
     assert len(ctx.sessions.sessions) == 1
-    entry = ctx.sessions.sessions[0]
-    assert entry.session_id == "DE-099-implementer"
-    assert entry.role == Role.IMPLEMENTER
+    entry = ctx.sessions.sessions["implementer"]
+    assert entry.session_name == "DE-099-implementer"
     assert entry.status == SessionStatus.ACTIVE
     assert entry.launched_at == datetime(2026, 3, 22, 14, 0, tzinfo=UTC)
 
   def test_empty_sessions_round_trip(self, tmp_path):
-    """Empty sessions list must survive write/read cycle."""
+    """Empty sessions dict must survive write/read cycle."""
     shutil.copy(FIXTURES / "state.yaml", tmp_path / "state.yaml")
 
-    sf = SessionsFile(artifact=_artifact_block(), sessions=[])
+    sf = SessionsFile(artifact=_artifact_block(), sessions={})
     write_sessions_file(tmp_path / "sessions.yaml", sf)
 
     ctx = load_workflow_dir(tmp_path)
     assert ctx.sessions is not None
-    assert ctx.sessions.sessions == []
+    assert ctx.sessions.sessions == {}
 
   def test_overwrites_existing(self, tmp_path):
     path = tmp_path / "sessions.yaml"
     sf1 = SessionsFile(
       artifact=_artifact_block(),
-      sessions=[_session_entry(session_id="old")],
+      sessions={"implementer": _session_entry(session_name="old")},
     )
     write_sessions_file(path, sf1)
 
     sf2 = SessionsFile(
       artifact=_artifact_block(),
-      sessions=[_session_entry(session_id="new")],
+      sessions={"implementer": _session_entry(session_name="new")},
     )
     write_sessions_file(path, sf2)
 
     data = yaml.safe_load(path.read_text())
     assert len(data["sessions"]) == 1
-    assert data["sessions"][0]["session_id"] == "new"
+    assert data["sessions"]["implementer"]["session_name"] == "new"
+
+  def test_canonical_null_preservation(self, tmp_path):
+    """Canonical required fields appear even when None (absent session)."""
+    path = tmp_path / "sessions.yaml"
+    entry = SessionEntry()  # all defaults — absent session
+    sf = SessionsFile(
+      artifact=_artifact_block(),
+      sessions={"reviewer": entry},
+    )
+    write_sessions_file(path, sf)
+    data = yaml.safe_load(path.read_text())
+    session = data["sessions"]["reviewer"]
+    assert session["session_name"] is None
+    assert session["status"] == "absent"
+    assert session["last_seen"] is None
+
+  def test_required_session_fields_subset_of_model(self):
+    """Contract: _REQUIRED_SESSION_FIELDS ⊆ SessionEntry.model_fields."""
+    assert set(SessionEntry.model_fields) >= _REQUIRED_SESSION_FIELDS

@@ -101,22 +101,21 @@ async def reconcile(
         )
 
   # Check sessions.yaml consistency
+  # DriftItem.session_id stores the session identifier from drift's perspective;
+  # it corresponds to SessionEntry.session_name and SessionHandle.session_id.
   if fresh_context.sessions:
-    for entry in fresh_context.sessions.sessions:
-      if entry.status == SessionStatus.ACTIVE:
-        # If we have handles, check if the active session matches
-        handle_ids = {h.session_id for h in (active_handles or [])}
-        if entry.session_id not in handle_ids:
-          drift_items.append(
-            DriftItem(
-              kind="ORPHANED_SESSION",
-              description=(
-                f"sessions.yaml lists {entry.session_id} as active "
-                f"but no matching live handle"
-              ),
-              session_id=entry.session_id,
-            )
+    handle_ids = {h.session_id for h in (active_handles or [])}
+    for role, entry in fresh_context.sessions.sessions.items():
+      if entry.status == SessionStatus.ACTIVE and entry.session_name not in handle_ids:
+        drift_items.append(
+          DriftItem(
+            kind="ORPHANED_SESSION",
+            description=(
+              f"sessions.yaml lists {role} as active but no matching live handle"
+            ),
+            session_id=entry.session_name,
           )
+        )
 
   report = ReconciliationReport(
     artifact_id=fresh_context.artifact_id,

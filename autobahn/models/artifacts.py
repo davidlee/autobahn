@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict
 from autobahn.models.enums import (
   ArtifactKind,
   BootstrapStatus,
+  DispositionAuthority,
   FindingDispositionAction,
   FindingStatus,
   HandoffTransitionStatus,
@@ -147,8 +148,8 @@ class HandoffFile(BaseModel):
 class StalenessKeyBlock(BaseModel):
   model_config = ConfigDict(extra="ignore")
 
+  phase_id: str | None = None
   head: str | None = None
-  state_sha: str | None = None
 
 
 class StalenessBlock(BaseModel):
@@ -162,8 +163,9 @@ class ReviewBlock(BaseModel):
 
   bootstrap_status: BootstrapStatus
   judgment_status: ReviewStatus | None = None
-  scope: str | None = None
-  current_round: int | None = None
+  session_scope: str | None = None
+  last_bootstrapped_at: datetime | None = None
+  source_handoff: str | None = None
 
 
 class ReviewIndexFile(BaseModel):
@@ -184,17 +186,25 @@ class FindingDisposition(BaseModel):
   model_config = ConfigDict(extra="ignore")
 
   action: FindingDispositionAction
-  authority: str | None = None
+  authority: DispositionAuthority
+  actor_id: str | None = None
   rationale: str | None = None
+  backlog_ref: str | None = None
+  resolved_at: str | None = None
+  superseded_by: str | None = None
+  timestamp: datetime | None = None
 
 
 class Finding(BaseModel):
   model_config = ConfigDict(extra="ignore")
 
   id: str
-  summary: str
-  status: FindingStatus
+  title: str
+  summary: str | None = None
+  status: FindingStatus = FindingStatus.OPEN
   disposition: FindingDisposition | None = None
+  files: list[str] = []
+  related_invariants: list[str] = []
 
 
 class ReviewRound(BaseModel):
@@ -202,8 +212,12 @@ class ReviewRound(BaseModel):
 
   round: int
   status: ReviewStatus
+  reviewer_role: Role | None = None
+  completed_at: datetime | None = None
+  summary: str | None = None
   blocking: list[Finding] = []
   non_blocking: list[Finding] = []
+  session: dict | None = None
 
 
 class ReviewFindingsBlock(BaseModel):
@@ -227,22 +241,31 @@ class ReviewFindingsFile(BaseModel):
 
 
 class SessionEntry(BaseModel):
+  """Per-role session record in sessions.yaml.
+
+  Core fields (canonical): session_name, status, last_seen, sandbox.
+  Extra fields (autobahn-owned): backend, launched_at, harness, pid.
+  """
+
   model_config = ConfigDict(extra="ignore")
 
-  session_id: str
-  role: Role
-  status: SessionStatus
-  backend: str
-  launched_at: datetime
-  last_activity: datetime | None = None
+  # Canonical fields
+  session_name: str | None = None
+  status: SessionStatus = SessionStatus.ABSENT
+  last_seen: datetime | None = None
+  sandbox: str | None = None
+
+  # autobahn-extra (written by autobahn, ignored by spec-driver)
+  backend: str | None = None
+  launched_at: datetime | None = None
   harness: str | None = None
   pid: int | None = None
 
 
 class SessionsFile(BaseModel):
-  """Full model — autobahn owns this file."""
+  """Role-keyed dict model — autobahn owns this file."""
 
   model_config = ConfigDict(extra="ignore")
 
   artifact: ArtifactBlock
-  sessions: list[SessionEntry] = []
+  sessions: dict[str, SessionEntry] = {}

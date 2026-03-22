@@ -8,12 +8,13 @@ artifact:
 review:
   bootstrap_status: warm
   judgment_status: in_progress
-  scope: artifact
-  current_round: 1
+  session_scope: artifact
+  last_bootstrapped_at: "2026-03-22T15:00:00+00:00"
+  source_handoff: workflow/handoff.current.yaml
 staleness:
   cache_key:
+    phase_id: IP-099.PHASE-01
     head: abc123de
-    state_sha: def456
 timestamps:
   created: "2026-03-22T15:30:00+00:00"
   updated: "2026-03-22T15:30:00+00:00"

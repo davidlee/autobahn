@@ -10,16 +10,22 @@ review:
 rounds:
   - round: 1
     status: in_progress
+    reviewer_role: reviewer
+    summary: "Initial review round"
     blocking:
       - id: F-001
-        summary: "Missing error handling in loader"
+        title: "Missing error handling in loader"
+        summary: "The loader does not handle malformed YAML gracefully"
         status: open
         disposition: null
     non_blocking:
       - id: F-002
-        summary: "Consider renaming helper function"
+        title: "Consider renaming helper function"
         status: open
-        disposition: null
+        disposition:
+          action: defer
+          authority: agent
+          rationale: "Low priority naming improvement"
 timestamps:
   created: "2026-03-22T16:00:00+00:00"
   updated: "2026-03-22T16:00:00+00:00"

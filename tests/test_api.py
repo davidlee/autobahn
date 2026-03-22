@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
@@ -261,12 +262,12 @@ class TestSpawnRoleSession:
     assert sessions_path.exists()
     data = yaml.safe_load(sessions_path.read_text())
     assert len(data["sessions"]) == 1
-    assert data["sessions"][0]["session_id"] == "DE-099-reviewer"
-    assert data["sessions"][0]["role"] == "reviewer"
-    assert data["sessions"][0]["status"] == "active"
+    assert data["sessions"]["reviewer"]["session_name"] == "DE-099-reviewer"
+    assert data["sessions"]["reviewer"]["status"] == "active"
 
   @pytest.mark.asyncio
-  async def test_spawn_appends_to_existing_sessions(self, tmp_path):
+  async def test_spawn_overwrites_role_entry(self, tmp_path):
+    """Spawning for a role that already has a session overwrites the entry."""
     base = _writable_workflow_dir(tmp_path)
     ctx = load_context(base)
     plan = transition_from_handoff(ctx)
@@ -279,8 +280,8 @@ class TestSpawnRoleSession:
     )
     assert result.success is True
     data = yaml.safe_load((base / "workflow" / "sessions.yaml").read_text())
-    # Original fixture had 1 session, spawn appended another
-    assert len(data["sessions"]) == 2
+    # Original fixture had implementer; spawn added reviewer
+    assert set(data["sessions"].keys()) == {"implementer", "reviewer"}
 
   @pytest.mark.asyncio
   async def test_spawn_handle_has_correct_metadata(self, tmp_path):
@@ -297,6 +298,33 @@ class TestSpawnRoleSession:
     )
     assert result.value.role == Role.REVIEWER
     assert result.value.artifact_id == "DE-099"
+
+  @pytest.mark.asyncio
+  async def test_spawn_warns_on_active_overwrite(self, tmp_path, caplog):
+    """F-1: overwriting active session logs a warning."""
+    base = _writable_workflow_dir(tmp_path)
+    ctx = load_context(base)
+    # Spawn once to create active reviewer entry
+    plan = transition_from_handoff(ctx)
+    await spawn_role_session(
+      ctx,
+      plan,
+      policy=_policy(),
+      harness=MockHarness(),
+      backend=MockBackend(),
+    )
+    # Reload context and spawn again for the same role
+    ctx = load_context(base)
+    plan = transition_from_handoff(ctx)
+    with caplog.at_level(logging.WARNING):
+      await spawn_role_session(
+        ctx,
+        plan,
+        policy=_policy(),
+        harness=MockHarness(),
+        backend=MockBackend(),
+      )
+    assert "Overwriting active session" in caplog.text
 
 
 # --- terminate_session ---
@@ -367,13 +395,6 @@ class TestPersistSessionStatuses:
       backend_ref="mock:1",
       launched_at=datetime.now(tz=UTC),
     )
-    result = await reconcile(
-      ctx,
-      policy=_policy(),
-      backend=MockBackend(available=True),
-      active_handles=[handle],
-    )
-    # sess-001 is alive but fixture has implementing status → no drift
     # Kill the backend to create SESSION_DIED_UNEXPECTEDLY
     backend_dead = MockBackend()
     backend_dead._alive = False
@@ -386,8 +407,7 @@ class TestPersistSessionStatuses:
     assert result.value.has_drift is True
     persist_session_statuses(ctx, result.value)
     data = yaml.safe_load((base / "workflow" / "sessions.yaml").read_text())
-    entry = next(s for s in data["sessions"] if s["session_id"] == "sess-001")
-    assert entry["status"] == "dead"
+    assert data["sessions"]["implementer"]["status"] == "dead"
 
   @pytest.mark.asyncio
   async def test_orphaned_session_marked_dead(self, tmp_path):
@@ -406,8 +426,7 @@ class TestPersistSessionStatuses:
     assert "ORPHANED_SESSION" in kinds
     persist_session_statuses(ctx, result.value)
     data = yaml.safe_load((base / "workflow" / "sessions.yaml").read_text())
-    entry = next(s for s in data["sessions"] if s["session_id"] == "sess-001")
-    assert entry["status"] == "dead"
+    assert data["sessions"]["implementer"]["status"] == "dead"
 
   @pytest.mark.asyncio
   async def test_alive_session_unchanged(self, tmp_path):
@@ -442,5 +461,4 @@ class TestPersistSessionStatuses:
     )
     persist_session_statuses(ctx, result.value)
     data = yaml.safe_load((base / "workflow" / "sessions.yaml").read_text())
-    entry = next(s for s in data["sessions"] if s["session_id"] == "DE-099-reviewer")
-    assert entry["status"] == "active"
+    assert data["sessions"]["reviewer"]["status"] == "active"
