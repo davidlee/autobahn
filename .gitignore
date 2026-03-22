@@ -1,3 +1,10 @@
 .spec-driver/run/
 .pi/APPEND_SYSTEM.md
 *.egg-info
+__pycache__/
+*.pyc
+.pytest_cache/
+dist/
+.venv/
+.direnv/
+.uv-cache/

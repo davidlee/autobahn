@@ -4,7 +4,7 @@ slug: "001-project-scaffold"
 name: "IP-001 Phase 01 — Project scaffold"
 created: "2026-03-22"
 updated: "2026-03-22"
-status: draft
+status: complete
 kind: phase
 ---
 
@@ -71,12 +71,12 @@ Establish a functional Python package matching spec-driver conventions. No busin
 
 ## 4. Exit Criteria / Done When
 
-- [ ] `uv run python -c "import autobahn"` succeeds
-- [ ] `ruff check` passes with zero warnings
-- [ ] `ruff format --check` passes
-- [ ] `uv run pytest` runs successfully (zero tests OK)
-- [ ] pyproject.toml has correct metadata, hatch build system, pydantic dependency
-- [ ] Justfile has `check`, `lint`, `format`, `test` commands
+- [x] `uv run python -c "import autobahn"` succeeds — prints 0.0.1
+- [x] `ruff check` passes with zero warnings
+- [x] `ruff format --check` passes
+- [x] `uv run pytest` runs successfully — 1 smoke test passes
+- [x] pyproject.toml has correct metadata, hatch build system, pydantic dependency
+- [x] Justfile has `check`, `lint`, `format`, `test` commands
 
 ## 5. Verification
 
@@ -94,10 +94,10 @@ Establish a functional Python package matching spec-driver conventions. No busin
 
 | Status | ID  | Description | Parallel? | Notes |
 |--------|-----|-------------|-----------|-------|
-| [ ] | 1.1 | Fix and modernise pyproject.toml | - | Remove supekku refs, enable hatch, add pydantic dep |
-| [ ] | 1.2 | Create package skeleton | - | `autobahn/__init__.py`, `tests/conftest.py`, `tests/fixtures/` |
-| [ ] | 1.3 | Configure Justfile | [P] | Basic commands: check, lint, format, test |
-| [ ] | 1.4 | Verify infrastructure | - | Run all exit criteria commands |
+| [x] | 1.1 | Fix and modernise pyproject.toml | - | Hatch enabled, pydantic+pyyaml deps, supekku refs removed |
+| [x] | 1.2 | Create package skeleton | - | `autobahn/__init__.py`, `tests/conftest.py`, `tests/fixtures/`, smoke test |
+| [x] | 1.3 | Configure Justfile | [P] | check, lint, format, test, format-check |
+| [x] | 1.4 | Verify infrastructure | - | All exit criteria pass |
 
 ### Task Details
 
@@ -124,14 +124,19 @@ Establish a functional Python package matching spec-driver conventions. No busin
 
 ## 9. Decisions & Outcomes
 
-_(filled during execution)_
+- Added README.md (minimal) — hatchling requires it when `readme = "README.md"` is set
+- Added smoke test (`tests/test_smoke.py`) — pytest exit code 5 (no tests) causes `just check` to fail; a version assertion test is honest and useful
+- Removed `watchfiles` from deps — not needed for library-first scope
+- Added `format-check` recipe to Justfile — useful for CI (non-mutating check)
 
 ## 10. Findings / Research Notes
 
-_(filled during execution)_
+- `[lint.pydocstyle]` and `[lint.per-file-ignores]` in the original pyproject.toml were missing the `tool.ruff` prefix — ruff silently ignores them. Fixed.
+- Duplicate `RET` in extend-select — harmless but messy, removed.
+- `pyproject.toml` had supekku per-file-ignores for paths that don't exist in autobahn — removed.
 
 ## 11. Wrap-up Checklist
 
-- [ ] Exit criteria satisfied
-- [ ] Verification evidence stored
+- [x] Exit criteria satisfied
+- [x] Verification evidence stored (inline above)
 - [ ] Hand-off notes to Phase 02

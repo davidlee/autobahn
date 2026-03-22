@@ -9,10 +9,11 @@ readme = "README.md"
 license = { text = "FSL-1.1-ALv2" }
 requires-python = ">=3.12"
 dependencies = [
+    "pydantic>=2.0,<3.0",
+    "pyyaml>=6.0.3",
     "tomlkit>=0.13.0",
-    "watchfiles>=1.0,<2.0",
 ]
-keywords = ["specification", "documentation", "adr", "architecture-decision-records", "spec-sync"]
+keywords = ["agent", "orchestration", "session", "lifecycle"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -21,69 +22,56 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-    "Topic :: Software Development :: Documentation",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 [project.urls]
-Homepage = "https://github.com/davidlee/spec-driver"
+Homepage = "https://github.com/davidlee/autobahn"
 Repository = "https://github.com/davidlee/autobahn"
-
-
-[project.scripts]
 
 #
 # BUILD MANIFEST
 #
 
-#[build-system]
-#requires = ["hatchling"]
-#build-backend = "hatchling.build"
-#
-#[tool.hatch.version]
-#path = "VERSION"
-#pattern = "(?P<version>.+)"
-#
-#[tool.hatch.build.targets.wheel]
-#packages = ["supekku"]
-#exclude = [
-#    "supekku/CLAUDE.md",
-#    ".direnv/",
-#    ".envrc",
-#    ".venv/",
-#    "flake.nix",
-#    "flake.lock",
-#    ".uv-",
-#    ".uv-cache/",
-#    ".pytest_cache/",
-#    "**/__pycache__/",
-#    "**/*.pyc",
-#    "**/*.pyo",
-#]
-#[tool.hatch.build.targets.wheel.force-include]
-#"memory" = "supekku/memory"
-#
-#
-#[tool.hatch.build.targets.sdist]
-#packages = ["supekku"]
-#
-#exclude = [
-#    "supekku/CLAUDE.md",
-#    ".direnv/",
-#    ".envrc",
-#    ".venv/",
-#    "flake.nix",
-#    "flake.lock",
-#    ".uv-",
-#    ".uv-cache/",
-#    ".pytest_cache/",
-#    "**/__pycache__/",
-#    "**/*.pyc",
-#    "**/*.pyo",
-#]
-#
-#[tool.hatch.build.targets.sdist.force-include]
-#"memory" = "memory"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "VERSION"
+pattern = "(?P<version>.+)"
+
+[tool.hatch.build.targets.wheel]
+packages = ["autobahn"]
+exclude = [
+    ".direnv/",
+    ".envrc",
+    ".venv/",
+    "flake.nix",
+    "flake.lock",
+    ".uv-",
+    ".uv-cache/",
+    ".pytest_cache/",
+    "**/__pycache__/",
+    "**/*.pyc",
+    "**/*.pyo",
+]
+
+[tool.hatch.build.targets.sdist]
+packages = ["autobahn"]
+exclude = [
+    ".direnv/",
+    ".envrc",
+    ".venv/",
+    "flake.nix",
+    "flake.lock",
+    ".uv-",
+    ".uv-cache/",
+    ".pytest_cache/",
+    "**/__pycache__/",
+    "**/*.pyc",
+    "**/*.pyo",
+]
 
 [dependency-groups]
 dev = [
@@ -99,6 +87,7 @@ minversion = "6.0"
 addopts = "-ra"
 asyncio_mode = "auto"
 testpaths = [
+    "tests",
 ]
 
 [tool.ruff]
@@ -107,57 +96,53 @@ indent-width = 2
 target-version = "py312"
 
 [tool.ruff.lint]
-# select = ["ALL"]
 extend-select = [
-      "F",    # Pyflakes
-      "E",    # pycodestyle errors
-      "W",    # pycodestyle warnings
-      "I",    # isort
-      "N",    # pep8-naming
-      "UP",   # pyupgrade
-      "B",    # flake8-bugbear
-      "A",    # flake8-builtins
-      "C4",   # flake8-comprehensions
-      "ICN",  # import conventions
-      "RET",  # return values
-      "PTH",  # Use pathlib instead of os.path
-      "COM",  # enforce trailing comma rules
-      "TID",  # Some good import practices
-      "RET",  # Good return practices
-      "FA",   # Enforce from __future__ import annotations
-      "SIM",  # simplify
-      "PL",   # pylint (selective)
+    "F",    # Pyflakes
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "A",    # flake8-builtins
+    "C4",   # flake8-comprehensions
+    "ICN",  # import conventions
+    "RET",  # return values
+    "PTH",  # Use pathlib instead of os.path
+    "COM",  # enforce trailing comma rules
+    "TID",  # import practices
+    "FA",   # from __future__ import annotations
+    "SIM",  # simplify
+    "PL",   # pylint (selective)
 ]
-
 ignore = [
-      "T201",    # print (CLI tools need it)
-      "S101",    # assert (pytest needs it)
-      "PLR0911", # too-many-return-statements
-      "PLR0912", # too-many-branches
-      "PLR0913", # too-many-arguments
-      "PLR0915", # too-many-statements
-      "C901",    # complex-structure
-      "FBT001", "FBT002",  # Boolean args
-      "PLR2004",  # Magic values - I have my doubts but ...
-      "D",        # All pydocstyle (handle separately if wanted)
-      "PTH123",   # Allow open() - sometimes clearer
-      "COM812",   # formatter wants trailing comma rule suppressed
+    "T201",    # print
+    "S101",    # assert
+    "PLR0911", # too-many-return-statements
+    "PLR0912", # too-many-branches
+    "PLR0913", # too-many-arguments
+    "PLR0915", # too-many-statements
+    "C901",    # complex-structure
+    "FBT001", "FBT002",  # Boolean args
+    "PLR2004", # Magic values
+    "D",       # pydocstyle
+    "PTH123",  # Allow open()
+    "COM812",  # trailing comma (formatter conflict)
 ]
 fixable = ["ALL"]
 unfixable = []
-# Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-[lint.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[lint.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "*test*.py" = [
-    "S101",    # asserts allowed in tests...
-    "ARG",     # Unused function args -> fixtures nevertheless are functionally relevant...
-    "FBT",     # Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
-    "PLR2004", # Magic value used in comparison, ...
-    "S311",    # Standard pseudo-random generators are not suitable for cryptographic purposes
+    "S101",    # asserts in tests
+    "ARG",     # unused fixture args
+    "FBT",     # boolean positional args
+    "PLR2004", # magic values
+    "S311",    # pseudo-random
 ]
 
 [tool.ruff.format]
@@ -165,20 +150,12 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 
-[tool.ruff.lint.per-file-ignores]
-"supekku/scripts/**/*.py" = [
-    "E402"  # ??
-]
-"supekku/cli/**/*.py" = [
-    "E402",    # ??
-    "PLC0415"  # ??
-]
+#
+# PyLint
+#
 
-#
-# PyLint :: main
-#
 [tool.pylint.main]
-fail-under = 9.70 ## FAIL-UNDER ##
+fail-under = 9.70
 reports = true
 output-format = "colorized"
 indent-string = "  "
@@ -196,7 +173,6 @@ default-docstring-type = "google"
 indent-string = "  "
 expected-line-ending-format = "LF"
 
-
 [tool.pylint.'messages control']
 per-file-ignores = [
     "**/*_test.py:protected-access,missing-function-docstring",
@@ -210,7 +186,6 @@ max-args = 5
 max-attributes = 7
 max-bool-expr = 5
 max-branches = 12
-# max-complexity = 10
 max-locals = 15
 max-parents = 7
 max-positional-arguments = 5

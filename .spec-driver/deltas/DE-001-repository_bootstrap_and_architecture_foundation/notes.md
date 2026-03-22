@@ -2,11 +2,41 @@
 
 ## Status
 
-- DE-001 scoped, DR-001 drafted and reviewed (3 external adversarial passes + DR-109 coherence review)
-- RE-001 filed for brief sandbox revision
-- IP-001 created with 5 phases
-- Phase 01 sheet populated, ready for execution
-- No implementation code written yet
+- DE-001 in-progress
+- Phase 01 complete — all exit criteria verified
+- Phase 02 not yet started (sheet needs creation per IP process)
+
+## Phase 01 — Project scaffold (complete)
+
+### What's done
+
+- `pyproject.toml`: hatch build system enabled, `packages = ["autobahn"]`, pydantic+pyyaml deps added, supekku refs removed, broken ruff config prefixes fixed, keywords/URLs corrected
+- Package skeleton: `autobahn/__init__.py` (`__version__ = "0.0.1"`), `tests/conftest.py`, `tests/fixtures/.gitkeep`
+- Justfile: `check`, `lint`, `format`, `test`, `format-check` recipes
+- Smoke test: `tests/test_smoke.py` — version assertion
+- `README.md`: minimal (hatchling requires it when `readme` field is set)
+- `.gitignore`: extended with `__pycache__/`, `*.pyc`, `.pytest_cache/`, `dist/`, `.venv/`, `.direnv/`, `.uv-cache/`
+
+### Surprises / adaptations
+
+- `[lint.pydocstyle]` and `[lint.per-file-ignores]` had wrong TOML table paths (missing `tool.ruff` prefix) — ruff silently ignored them
+- Hatchling fails hard if README.md doesn't exist when `readme = "README.md"` is in pyproject.toml
+- `pytest` exit code 5 (no tests collected) makes `just check` fail — added smoke test rather than suppressing
+
+### Verification
+
+`just check` passes — format, lint, test all green.
+
+### Commits
+
+Uncommitted — all changes pending commit.
+
+### Loose ends (carried from prior agent)
+
+- **RE-001 actions**: brief.md sections need updating per RE-001 §5 — not blocking
+- **spec-driver symlink**: still at repo root — consider cleanup
+- **`.claude/settings.local.json`**: committed — verify intentional
+- **`DR-001-design-conversation.txt`**: committed — consider gitignoring
 
 ## New Agent Instructions
 
@@ -14,71 +44,33 @@
 
 Delta: `DE-001` — Repository bootstrap and architecture foundation
 
-### Required reading (in order)
+### What to do next
 
-1. `.spec-driver/deltas/DE-001-repository_bootstrap_and_architecture_foundation/DE-001.md` — delta scope
-2. `.spec-driver/deltas/DE-001-repository_bootstrap_and_architecture_foundation/DR-001.md` — design revision (primary authority)
-3. `.spec-driver/deltas/DE-001-repository_bootstrap_and_architecture_foundation/IP-001.md` — implementation plan (5 phases)
-4. `.spec-driver/deltas/DE-001-repository_bootstrap_and_architecture_foundation/phases/phase-01.md` — active phase sheet
+Create Phase 02 sheet (`phases/phase-02.md`) per IP-001 §4 then execute it. Phase 02 is models + artifacts: typed pydantic models and artifact loader with contract test fixtures.
 
-### Related documents
+### Required reading
 
-- `brief.md` — original architecture brief (§5.5 sandbox adapter superseded by RE-001)
-- `.spec-driver/revisions/RE-001-sandbox_adapter_layer_removed_from_autobahn_scope/RE-001.md` — sandbox revision
-- spec-driver `DR-109` at `../spec-driver/.spec-driver/deltas/DE-109-review_state_machine_formalisation/DR-109.md` — review state machine (3 review passes complete, substantially answers OQ-003)
+1. `DE-001.md` — delta scope
+2. `DR-001.md` — design revision (primary authority for model shapes, decisions DEC-001 through DEC-019)
+3. `IP-001.md` — implementation plan
+4. Phase 02 row in IP-001 §4 — entrance: P01 complete, exit: models validate against fixtures
 
 ### Key files
 
-- `pyproject.toml` — needs hatch build system, pydantic dep, supekku cleanup (Phase 01 task 1.1)
-- `VERSION` — `0.0.1`
-- `Justfile` — empty, needs basic commands (Phase 01 task 1.3)
-- `flake.nix` — nix build environment (do not modify without user approval)
-- `.envrc` — `use flake`
+- `pyproject.toml` — clean, hatch functional
+- `autobahn/__init__.py` — package root
+- `tests/conftest.py` — empty, ready for fixtures
+- `tests/fixtures/` — empty dir for YAML contract fixtures
+- `Justfile` — `just check` is the verification command
 
 ### Relevant memories
 
-- `project_de107_pydantic.md` — DE-107 is internal pydantic migration, not shared schema surface; convergence via DE-110 fixtures
-- `project_track_specdriver_conventions.md` — hatch, >=3.12, ruff, 2-space indent, flat package layout
+- `project_de107_pydantic.md` — DE-107 is internal migration, convergence via DE-110 fixtures
+- `project_track_specdriver_conventions.md` — hatch, >=3.12, ruff, 2-space indent
 - `project_pi_mono_preferred_harness.md` — pi-mono first-class via extension protocols
 
-### Relevant doctrine
+### Key decisions for Phase 02
 
-- `.spec-driver/hooks/doctrine.md` — commit policy: frequent small commits of `.spec-driver/**`, conventional messages (`fix(DE-001): ...`)
-- Ceremony mode: `town_planner` — delta-first flow
-
-### Key user instructions and decisions
-
-- **19 design decisions** in DR-001 frontmatter (DEC-001 through DEC-019). Key ones:
-  - DEC-001: Narrow pydantic models (stable field subset, `extra="ignore"`)
-  - DEC-003: Sandbox is not autobahn's concern (RE-001)
-  - DEC-006: 4-op async session backend (spawn/observe/terminate only in v1)
-  - DEC-010: Structured references not prompts — spec-driver owns prompt content
-  - DEC-012: v1 API is spawn/observe/terminate only
-  - DEC-013: Observation is structured logging only in v1
-  - DEC-014: Review APIs internal/experimental until spec-driver contract lands
-  - DEC-017: Reconciliation re-reads state.yaml to detect external workflow changes
-
-- **User preferences**: quality > speed, DRY, small composable units, 2-space indent, TDD (red/green/refactor), obsess over coupling/cohesion
-
-### Incomplete work / loose ends
-
-- **RE-001 actions not completed**: brief.md sections need updating per RE-001 §5. Not blocking for implementation but should be done before DE-001 closes.
-- **pyproject.toml already partially fixed**: `long_description_content_type` removed, license changed to `FSL-1.1-ALv2`. Build system still commented out.
-- **Spec-driver worktree symlink**: `spec-driver` symlink exists at repo root (committed in earlier pass) — may need cleanup.
-- **`.claude/settings.local.json`**: committed — verify this is intentional or gitignore it.
-- **`autobahn.egg-info/`**: may exist from earlier build attempt — gitignore it.
-- **`DR-001-design-conversation.txt`**: exported conversation file committed — consider gitignoring.
-
-### Commit-state guidance
-
-- `.spec-driver/**` changes are committed and clean
-- No code changes to commit
-- The `spec-driver` symlink, `DR-001-design-conversation.txt`, `.claude/settings.local.json`, and `autobahn.egg-info/` were committed and should be reviewed — some may belong in `.gitignore`
-
-### Advice for next agent
-
-- Phase 01 is pure infrastructure — no business logic. Keep it tight.
-- The `pyproject.toml` is a mess of copy-paste from spec-driver. Task 1.1 is a cleanup pass: enable hatch, set `packages = ["autobahn"]`, add pydantic + pyyaml deps, remove all supekku references from tool config sections.
-- The flake.nix already provides Python, uv, ruff. Don't modify it without asking.
-- `spec-driver` is available via `uv run spec-driver` — already verified.
-- After Phase 01, the next agent should create Phase 02 sheet before implementing (per IP process — one phase sheet at a time).
+- DEC-001: Narrow pydantic models — stable field subset, `extra="ignore"`
+- DEC-010: Structured references not prompts
+- DEC-017: Reconciliation re-reads state.yaml
