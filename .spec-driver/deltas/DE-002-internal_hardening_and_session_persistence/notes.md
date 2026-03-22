@@ -2,10 +2,9 @@
 
 ## Status
 
-- DE-002 scoped, DR-002 drafted and reviewed (2 external adversarial passes)
-- IP-002 created with 2 phases, both phase sheets populated
-- No implementation code written yet
-- All `.spec-driver` changes committed and clean
+- DE-002 `in-progress`
+- **Phase 01 complete** — all 5 tasks done, 101 tests pass, `just check` clean
+- Phase 02 not started
 
 ## New Agent Instructions
 
@@ -58,22 +57,43 @@ Delta: `DE-002` — Internal hardening and session persistence
 - **DEC-027**: SCHEMA_VERSIONS in artifacts/schema.py (public, shared); write at highest supported version
 - **DEC-028**: DriftItem gains session_id field for persist_session_statuses
 
+## Phase 01 — Implementation Log
+
+### Completed tasks
+
+| Task | What | Commits |
+|------|------|---------|
+| 1.1 | Created `artifacts/schema.py` — `SCHEMA_VERSIONS` map + `write_version()` | `16bf42d` |
+| 1.2 | Added `_validate_schema_marker` to loader, called before each `model_validate` | `16bf42d` |
+| 1.3 | `TERMINAL_WORKFLOW_STATES` in `models/enums.py`; deleted local sets from `transition.py` and `reconcile.py` | `16bf42d` |
+| 1.4 | Removed `Supervisor.observe`; inlined in `api/functions.py`; `spawn` patches handle via `model_copy` | `16bf42d` |
+| 1.5 | Full suite: 101 tests pass (96 original + 5 new schema validation tests) | `16bf42d` |
+
+### Adaptations from DR-002
+
+- `_OPTIONAL_FILES` changed from `dict[str, type[BaseModel]]` to `dict[str, tuple[str, type[BaseModel]]]` — the tuple carries the expected schema string alongside the model class. DR-002 showed this pattern but didn't spell out the type change.
+- `test_invalid_schema_raises` updated: the original test sent `foo: bar` which now hits schema validation (missing schema field) before pydantic validation. Changed the fixture to include valid schema+version so it still exercises the pydantic contract path.
+- Removing `WorkflowStatus` import from `transition.py` — it was only used by the deleted `_TERMINAL_STATES` local.
+
+### Surprises / observations
+
+- None significant. DR-002 code samples were accurate; fixtures already had correct markers. Clean execution.
+- Test count grew from 96 → 101 (5 new schema validation tests in `TestSchemaValidation`).
+
 ### Incomplete work / loose ends
 
 - **DE-001 carry-forwards** still open: RE-001 brief.md update, spec-driver symlink cleanup, `.claude/settings.local.json` in git
-- **DE-105** (spec-driver bug): `create phase` appends duplicate entry to IP phases list — next agent will need to fix these manually after each `create phase` (as we did throughout DE-001)
+- **DE-105** (spec-driver bug): `create phase` appends duplicate entry to IP phases list
 
 ### Commit-state guidance
 
-- All `.spec-driver/**` changes committed and clean
-- No code changes pending
-- Worktree is clean except `.claude/settings.local.json` (pre-existing, not ours)
+- Code committed at `16bf42d`, delta status at `92419a2`
+- `.spec-driver/**` notes pending (this file)
+- Worktree otherwise clean except `.claude/settings.local.json` (pre-existing, not ours)
 
 ### Advice for next agent
 
-- Phase 01 is pure refactoring — no new write paths. All 96 existing tests should continue passing throughout. Run `just check` after each task.
-- Schema validation (task 1.2) will touch the loader's core `load_workflow_dir` function — be careful with the callsite ordering (validate schema marker BEFORE model_validate, not after).
-- The Supervisor refactor (task 1.4) and observe inline (task 1.5) can be done together since they're tightly coupled — removing observe from Supervisor and inlining it in api/functions.py.
-- The existing test_api.py `TestObserveSession` test should pass unchanged since observe_session's signature doesn't change.
-- All test fixtures already carry correct `schema` and `version` fields — confirmed during AUD-001. No fixture updates needed.
-- Phase 02 depends on Phase 01 completing (schema.py needed by the writer).
+- Phase 02 is the write path: `artifacts/writer.py`, spawn persistence in `api/functions.py`, `persist_session_statuses`, `DriftItem.session_id` in `reconcile.py`.
+- `artifacts/schema.py` is now available for the writer to import `write_version()`.
+- `DriftItem.session_id` addition (DEC-028) needs to happen in Phase 02 before `persist_session_statuses` — reconcile must populate it at each drift item creation site.
+- The reconcile tests don't currently assert on `session_id` — they'll need updating when the field is added.

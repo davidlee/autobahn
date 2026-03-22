@@ -4,7 +4,7 @@ slug: "001-refactors"
 name: "IP-002 Phase 01 — Refactors"
 created: "2026-03-22"
 updated: "2026-03-22"
-status: draft
+status: complete
 kind: phase
 ---
 
@@ -69,31 +69,32 @@ Schema validation, shared constants, Supervisor cleanup. No new write paths.
 
 ## 4. Exit Criteria / Done When
 
-- [ ] `artifacts/schema.py` with `SCHEMA_VERSIONS` and `write_version()`
-- [ ] Loader validates schema markers (state.yaml + all optional files)
-- [ ] Loader rejects: missing schema, wrong schema, unsupported version
-- [ ] `observe_session` inlined — no Supervisor involvement
-- [ ] `Supervisor.observe` deleted
-- [ ] `Supervisor.spawn` patches handle via `model_copy`
-- [ ] `TERMINAL_WORKFLOW_STATES` in `models/enums.py`; local sets deleted
-- [ ] `just check` passes
+- [x] `artifacts/schema.py` with `SCHEMA_VERSIONS` and `write_version()`
+- [x] Loader validates schema markers (state.yaml + all optional files)
+- [x] Loader rejects: missing schema, wrong schema, unsupported version
+- [x] `observe_session` inlined — no Supervisor involvement
+- [x] `Supervisor.observe` deleted
+- [x] `Supervisor.spawn` patches handle via `model_copy`
+- [x] `TERMINAL_WORKFLOW_STATES` in `models/enums.py`; local sets deleted
+- [x] `just check` passes
 
 ## 5. Tasks & Progress
 
 | Status | ID  | Description | Parallel? | Notes |
 |--------|-----|-------------|-----------|-------|
-| [ ] | 1.1 | Create artifacts/schema.py | [P] | DEC-027 |
-| [ ] | 1.2 | Add schema validation to loader | - | Depends on 1.1; DEC-020 |
-| [ ] | 1.3 | TERMINAL_WORKFLOW_STATES + update consumers | [P] | DEC-024 |
-| [ ] | 1.4 | Refactor Supervisor + inline observe | [P] | DEC-021, DEC-023 |
-| [ ] | 1.5 | Verify all tests pass | - | Depends on all |
+| [x] | 1.1 | Create artifacts/schema.py | [P] | DEC-027 |
+| [x] | 1.2 | Add schema validation to loader | - | Depends on 1.1; DEC-020 |
+| [x] | 1.3 | TERMINAL_WORKFLOW_STATES + update consumers | [P] | DEC-024 |
+| [x] | 1.4 | Refactor Supervisor + inline observe | [P] | DEC-021, DEC-023 |
+| [x] | 1.5 | Verify all tests pass | - | 101 tests (96 original + 5 new) |
 
 ## 6. Decisions & Outcomes
 
-_(filled during execution)_
+- No deviations from DR-002 design. All DEC-020/021/023/024/027 implemented as specified.
+- `_OPTIONAL_FILES` type changed to carry schema key alongside model class — natural extension of DR-002 §4.1.
 
 ## 7. Wrap-up Checklist
 
-- [ ] Exit criteria satisfied
-- [ ] Verification evidence stored
-- [ ] Hand-off notes to Phase 02
+- [x] Exit criteria satisfied
+- [x] Verification evidence: `just check` passes, 101 tests, commit `16bf42d`
+- [x] Hand-off notes in `notes.md` for Phase 02
