@@ -2,9 +2,9 @@
 
 ## Status
 
-- DE-002 `in-progress`
-- **Phase 01 complete** — all 5 tasks done, 101 tests pass, `just check` clean
-- Phase 02 not started
+- DE-002 `in-progress` — both phases complete, ready for audit
+- **Phase 01 complete** — schema validation, shared constants, supervisor refactor (101 tests)
+- **Phase 02 complete** — sessions.yaml writer, spawn persistence, persist_session_statuses (111 tests)
 
 ## New Agent Instructions
 
@@ -85,15 +85,35 @@ Delta: `DE-002` — Internal hardening and session persistence
 - **DE-001 carry-forwards** still open: RE-001 brief.md update, spec-driver symlink cleanup, `.claude/settings.local.json` in git
 - **DE-105** (spec-driver bug): `create phase` appends duplicate entry to IP phases list
 
+## Phase 02 — Implementation Log
+
+### Completed tasks
+
+| Task | What | Commits |
+|------|------|---------|
+| 2.1 | `artifacts/writer.py` — `write_sessions_file()` with atomic rename | `7887e21` |
+| 2.2 | `DriftItem.session_id` field; reconcile populates at all 3 creation sites | `7887e21` |
+| 2.3 | `spawn_role_session` writes to sessions.yaml; DEC-026 error handling | `7887e21` |
+| 2.4 | `persist_session_statuses` — sync, report-driven, 3 drift kinds | `7887e21` |
+| 2.5 | Full suite: 111 tests pass (96 original + 15 new) | `7887e21` |
+
+### Adaptations from DR-002
+
+- `test_spawn_success` had to move from read-only fixtures to tmp_path since spawn now writes sessions.yaml.
+- `_persist_new_session` uses `harness.name` as the `backend` field in SessionEntry — DR-002 showed `harness_name` parameter but didn't specify what string to use.
+
+### Surprises / observations
+
+- Datetime round-trip works cleanly through YAML — pydantic serializes to ISO 8601, YAML loads it back. VA-005 confirms.
+- The `model_copy(update=...)` pattern is clean for building immutable updated collections.
+
 ### Commit-state guidance
 
-- Code committed at `16bf42d`, delta status at `92419a2`
-- `.spec-driver/**` notes pending (this file)
-- Worktree otherwise clean except `.claude/settings.local.json` (pre-existing, not ours)
+- Phase 01 code: `16bf42d`, phase 02 code: `7887e21`
+- `.spec-driver/**` changes pending (this commit)
+- Worktree otherwise clean except `.claude/settings.local.json` (pre-existing)
 
 ### Advice for next agent
 
-- Phase 02 is the write path: `artifacts/writer.py`, spawn persistence in `api/functions.py`, `persist_session_statuses`, `DriftItem.session_id` in `reconcile.py`.
-- `artifacts/schema.py` is now available for the writer to import `write_version()`.
-- `DriftItem.session_id` addition (DEC-028) needs to happen in Phase 02 before `persist_session_statuses` — reconcile must populate it at each drift item creation site.
-- The reconcile tests don't currently assert on `session_id` — they'll need updating when the field is added.
+- Both phases complete. Next step is `/audit-change` for verification and spec reconciliation.
+- All 5 AUD-001 findings addressed: F-001 (observe refactor), F-002 (handle metadata), F-005 (shared constant), F-007 (schema validation), F-011 (sessions.yaml writes).

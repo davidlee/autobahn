@@ -4,7 +4,7 @@ slug: "002-write-path"
 name: "IP-002 Phase 02 — Write path"
 created: "2026-03-22"
 updated: "2026-03-22"
-status: draft
+status: complete
 kind: phase
 ---
 
@@ -68,33 +68,35 @@ Sessions.yaml write support. After this phase, autobahn persists session state a
 
 ## 3. Entrance Criteria
 
-- [ ] Phase 01 complete
+- [x] Phase 01 complete
 
 ## 4. Exit Criteria / Done When
 
-- [ ] `artifacts/writer.py` with `write_sessions_file()` (atomic rename, version from schema.py)
-- [ ] `DriftItem.session_id` field populated by reconcile
-- [ ] `spawn_role_session` writes session entry (DEC-026: success+warning on write failure)
-- [ ] `persist_session_statuses(context, report)` — sync, report-driven, 3 cases tested
-- [ ] VA-005: round-trip via `load_workflow_dir`, empty sessions
-- [ ] `just check` passes
+- [x] `artifacts/writer.py` with `write_sessions_file()` (atomic rename, version from schema.py)
+- [x] `DriftItem.session_id` field populated by reconcile
+- [x] `spawn_role_session` writes session entry (DEC-026: success+warning on write failure)
+- [x] `persist_session_statuses(context, report)` — sync, report-driven, 3 cases tested
+- [x] VA-005: round-trip via `load_workflow_dir`, empty sessions
+- [x] `just check` passes
 
 ## 5. Tasks & Progress
 
 | Status | ID  | Description | Parallel? | Notes |
 |--------|-----|-------------|-----------|-------|
-| [ ] | 2.1 | Implement write_sessions_file | - | DEC-022, DEC-027 |
-| [ ] | 2.2 | DriftItem.session_id + update reconcile | [P] | DEC-028 |
-| [ ] | 2.3 | Spawn persistence in api/functions.py | - | Depends on 2.1; DEC-026 |
-| [ ] | 2.4 | Implement persist_session_statuses | - | Depends on 2.1, 2.2; DEC-025 |
-| [ ] | 2.5 | Verify all tests pass | - | Depends on all |
+| [x] | 2.1 | Implement write_sessions_file | - | DEC-022, DEC-027 |
+| [x] | 2.2 | DriftItem.session_id + update reconcile | [P] | DEC-028 |
+| [x] | 2.3 | Spawn persistence in api/functions.py | - | DEC-026 |
+| [x] | 2.4 | Implement persist_session_statuses | - | DEC-025 |
+| [x] | 2.5 | Verify all tests pass | - | 111 tests (96 original + 15 new) |
 
 ## 6. Decisions & Outcomes
 
-_(filled during execution)_
+- All DEC-022/025/026/027/028 implemented as specified in DR-002.
+- `test_spawn_success` changed to use tmp_path-based workflow dir since spawn now writes sessions.yaml — can't use read-only fixtures.
+- `_persist_new_session` uses `harness.name` as the `backend` field in SessionEntry (harness name is the most meaningful identifier for the session's tooling context).
 
 ## 7. Wrap-up Checklist
 
-- [ ] Exit criteria satisfied
-- [ ] Verification evidence stored
-- [ ] DE-002 acceptance criteria met
+- [x] Exit criteria satisfied
+- [x] Verification evidence: `just check` passes, 111 tests, commit `7887e21`
+- [x] DE-002 acceptance criteria met — all 5 AUD-001 findings addressed
