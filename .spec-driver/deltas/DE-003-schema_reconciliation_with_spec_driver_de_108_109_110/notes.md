@@ -41,7 +41,7 @@ Delta: `DE-003` — Schema reconciliation with spec-driver DE-108/109/110
 - `tests/test_api.py` — dict-based spawn/persist tests
 - `tests/test_writer.py` — dict round-trip
 - `tests/test_reconcile.py` — dict orphan detection
-- `tests/test_models.py` or `tests/test_artifacts.py` — new FindingDisposition model test, `_CANONICAL_SESSION_FIELDS` assertion
+- `tests/test_models.py` or `tests/test_artifacts.py` — new FindingDisposition model test, `_REQUIRED_SESSION_FIELDS` assertion
 
 ### Canonical schema references (in spec-driver repo at `~/dev/spec-driver`)
 
@@ -76,7 +76,7 @@ DR-003 Appendix A documents all findings. Key ones to not miss during implementa
 2. **F-4**: Fixture must include finding with populated disposition; add model test for FindingDisposition with required authority
 3. **F-8**: `DriftItem.session_id` naming kept as-is; add comment explaining chain
 4. **F-9**: Hoist `handle_ids` above orphan detection loop (fixes existing bug)
-5. **F-2**: Add contract test `_CANONICAL_SESSION_FIELDS ⊆ SessionEntry.model_fields`
+5. **F-2**: Add contract test `_REQUIRED_SESSION_FIELDS ⊆ SessionEntry.model_fields`
 6. **F-3**: Add comment about `exclude_none` future footgun
 
 ### Incomplete work / loose ends
