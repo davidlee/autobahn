@@ -14,7 +14,7 @@ delta: DE-004
 
 ## 1. Objective
 
-Replace autobahn's review-related enum definitions with re-export aliases from `spec_driver.workflow`. Update artifact model imports. Remove dead error types. Verify all existing tests pass with zero behaviour change.
+Replace autobahn's review-related enum definitions with re-export aliases from `spec_driver.orchestration`. Update artifact model imports. Remove dead error types. Verify all existing tests pass with zero behaviour change.
 
 ## 2. Links & References
 
@@ -26,31 +26,31 @@ Replace autobahn's review-related enum definitions with re-export aliases from `
 ## 3. Entrance Criteria
 
 - [x] DR-004 approved (3 review rounds complete)
-- [ ] spec-driver DE-124 landed — `from spec_driver.workflow import BootstrapStatus` works
+- [ ] spec-driver DE-124 landed — `from spec_driver.orchestration import BootstrapStatus` works
 - [ ] `uv sync` succeeds with updated spec-driver
 
 ## 4. Exit Criteria / Done When
 
 - [ ] Review enums removed from `autobahn/models/enums.py`, replaced with re-export aliases
-- [ ] `autobahn/models/artifacts.py` imports review types from `spec_driver.workflow`
+- [ ] `autobahn/models/artifacts.py` imports review types from `spec_driver.orchestration`
 - [ ] `ToolInvocationError` and `ToolContractError` removed from `autobahn/models/errors.py`
 - [ ] All 116 existing tests pass (zero failures, zero changes to test logic)
 - [ ] `uv run ruff check autobahn tests` clean
 - [ ] `uv run ruff format --check autobahn tests` clean
-- [ ] Re-export alias smoke: `from autobahn.models.enums import BootstrapStatus` resolves and `is` `spec_driver.workflow.BootstrapStatus`
+- [ ] Re-export alias smoke: `from autobahn.models.enums import BootstrapStatus` resolves and `is` `spec_driver.orchestration.BootstrapStatus`
 
 ## 5. Verification
 
 - `uv run python -m pytest` — all 116 existing tests pass
 - `uv run ruff check autobahn tests` — zero warnings
 - `uv run ruff format --check autobahn tests` — no changes needed
-- Manual check: `uv run python -c "from autobahn.models.enums import BootstrapStatus; from spec_driver.workflow import BootstrapStatus as SD; assert BootstrapStatus is SD"`
+- Manual check: `uv run python -c "from autobahn.models.enums import BootstrapStatus; from spec_driver.orchestration import BootstrapStatus as SD; assert BootstrapStatus is SD"`
 
 ## 6. Assumptions & STOP Conditions
 
 - **Assumption**: spec-driver DE-124 exports all review-related enums and types listed in DR-124 §5.3
 - **Assumption**: spec-driver's review types are structurally compatible (same field names, same `extra="ignore"`)
-- **STOP when**: `from spec_driver.workflow import BootstrapStatus` fails (DE-124 not landed or incomplete)
+- **STOP when**: `from spec_driver.orchestration import BootstrapStatus` fails (DE-124 not landed or incomplete)
 - **STOP when**: existing test failures that aren't explained by the enum/import changes
 
 ## 7. Tasks & Progress
@@ -67,14 +67,14 @@ Replace autobahn's review-related enum definitions with re-export aliases from `
 ### Task Details
 
 - **1.1 Verify DE-124 availability**
-  - **Approach**: `uv sync && uv run python -c "from spec_driver.workflow import BootstrapStatus, ReviewStatus, FindingDispositionAction, DispositionAuthority, FindingStatus, FindingDisposition, ReviewFinding"`
+  - **Approach**: `uv sync && uv run python -c "from spec_driver.orchestration import BootstrapStatus, ReviewStatus, FindingDispositionAction, DispositionAuthority, FindingStatus, FindingDisposition, ReviewFinding"`
   - **STOP** if this fails — DE-124 is the blocking prerequisite.
 
 - **1.2 Retire review enums in `models/enums.py`**
   - **Files**: `autobahn/models/enums.py`
   - **Approach**: Remove class definitions for `BootstrapStatus`, `ReviewStatus`, `FindingDispositionAction`, `DispositionAuthority`, `FindingStatus`. Replace with:
     ```python
-    from spec_driver.workflow import (
+    from spec_driver.orchestration import (
       BootstrapStatus,
       ReviewStatus,
       FindingDispositionAction,
@@ -86,7 +86,7 @@ Replace autobahn's review-related enum definitions with re-export aliases from `
 
 - **1.3 Update `models/artifacts.py` imports**
   - **Files**: `autobahn/models/artifacts.py`
-  - **Approach**: Change review-related type imports to use `spec_driver.workflow` as canonical source. Specifically: `BootstrapStatus`, `ReviewStatus`, `FindingStatus`, `FindingDispositionAction`, `DispositionAuthority` in `ReviewBlock`, `FindingDisposition`, `Finding`, `ReviewRound` models.
+  - **Approach**: Change review-related type imports to use `spec_driver.orchestration` as canonical source. Specifically: `BootstrapStatus`, `ReviewStatus`, `FindingStatus`, `FindingDispositionAction`, `DispositionAuthority` in `ReviewBlock`, `FindingDisposition`, `Finding`, `ReviewRound` models.
   - **Testing**: `test_artifacts.py` YAML loading unchanged.
 
 - **1.4 Remove dead error types from `models/errors.py`**
@@ -100,7 +100,7 @@ Replace autobahn's review-related enum definitions with re-export aliases from `
     ```python
     def test_review_enums_are_spec_driver_types():
       from autobahn.models.enums import BootstrapStatus
-      from spec_driver.workflow import BootstrapStatus as SD
+      from spec_driver.orchestration import BootstrapStatus as SD
       assert BootstrapStatus is SD
     ```
   - Repeat for all 5 retired enums.

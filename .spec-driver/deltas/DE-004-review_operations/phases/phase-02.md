@@ -14,7 +14,7 @@ delta: DE-004
 
 ## 1. Objective
 
-Implement `prime_review`, `summarize_review_outcome`, and `disposition_finding` as thin wrappers around `spec_driver.workflow` composed operations. Export from autobahn's public API. Write tests.
+Implement `prime_review`, `summarize_review_outcome`, and `disposition_finding` as thin wrappers around `spec_driver.orchestration` composed operations. Export from autobahn's public API. Write tests.
 
 ## 2. Links & References
 
@@ -26,7 +26,7 @@ Implement `prime_review`, `summarize_review_outcome`, and `disposition_finding` 
 ## 3. Entrance Criteria
 
 - [ ] Phase 1 complete (enum retirement, all existing tests passing)
-- [ ] `spec_driver.workflow.prime_review`, `summarize_review`, `disposition_finding` importable
+- [ ] `spec_driver.orchestration.prime_review`, `summarize_review`, `disposition_finding` importable
 
 ## 4. Exit Criteria / Done When
 
@@ -70,7 +70,7 @@ Implement `prime_review`, `summarize_review_outcome`, and `disposition_finding` 
 ### Task Details
 
 - **2.1 Verify spec-driver operation signatures**
-  - **Approach**: Inspect `spec_driver.workflow` imports, confirm:
+  - **Approach**: Inspect `spec_driver.orchestration` imports, confirm:
     - `prime_review(delta_dir: Path, repo_root: Path) → PrimeResult`
     - `summarize_review(delta_dir: Path) → ReviewSummary`
     - `disposition_finding(delta_dir: Path, finding_id: str, *, action: FindingDispositionAction, authority: DispositionAuthority, ...) → DispositionResult`
@@ -78,7 +78,7 @@ Implement `prime_review`, `summarize_review_outcome`, and `disposition_finding` 
 
 - **2.2–2.3 `prime_review`**
   - **Files**: `autobahn/api/functions.py`, `tests/test_api.py`
-  - **Test approach**: Mock `spec_driver.workflow.prime_review`, verify:
+  - **Test approach**: Mock `spec_driver.orchestration.prime_review`, verify:
     - Called with correct `(delta_dir, repo_root)` args
     - Return value passed through as-is
     - spec-driver exceptions propagate (mock raising `StateNotFoundError` → caller sees it)
@@ -86,12 +86,12 @@ Implement `prime_review`, `summarize_review_outcome`, and `disposition_finding` 
 
 - **2.4–2.5 `summarize_review_outcome`**
   - **Files**: `autobahn/api/functions.py`, `tests/test_api.py`
-  - **Test approach**: Mock `spec_driver.workflow.summarize_review`, verify delegation + exception propagation (`FindingsNotFoundError`, `FindingsVersionError`)
+  - **Test approach**: Mock `spec_driver.orchestration.summarize_review`, verify delegation + exception propagation (`FindingsNotFoundError`, `FindingsVersionError`)
   - **Implementation**: ~3 lines
 
 - **2.6–2.7 `disposition_finding`**
   - **Files**: `autobahn/api/functions.py`, `tests/test_api.py`
-  - **Test approach**: Mock `spec_driver.workflow.disposition_finding`, verify:
+  - **Test approach**: Mock `spec_driver.orchestration.disposition_finding`, verify:
     - All keyword args forwarded correctly
     - `FindingNotFoundError` propagates
     - Default `authority=DispositionAuthority.AGENT` applied
@@ -101,7 +101,7 @@ Implement `prime_review`, `summarize_review_outcome`, and `disposition_finding` 
   - Add `prime_review`, `summarize_review_outcome`, `disposition_finding` to imports and `__all__`
 
 - **2.9 Update `test_coupling.py`**
-  - Verify `spec_driver.workflow` is in the allowed import set for `autobahn.api.functions`
+  - Verify `spec_driver.orchestration` is in the allowed import set for `autobahn.api.functions`
 
 - **2.10 Full suite + lint**
   - `uv run python -m pytest` — all pass

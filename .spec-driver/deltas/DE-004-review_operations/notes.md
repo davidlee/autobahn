@@ -1,5 +1,23 @@
 # Notes for DE-004
 
+## 2026-03-23: Implementation
+
+### Phase 1: Enum retirement & cleanup
+- Replaced 5 review enum definitions in `models/enums.py` with re-export aliases from `spec_driver.orchestration`
+- Removed `ToolInvocationError` and `ToolContractError` from `models/errors.py`
+- Updated `test_enums.py`: replaced value-comparison contract tests with `is`-identity alias tests
+- Updated `test_models.py`: removed references to deleted error types
+- 114 tests passing, lint clean
+
+### Phase 2: Review API functions
+- Implemented 3 thin wrappers in `api/functions.py`: `prime_review`, `summarize_review_outcome`, `disposition_finding`
+- Each delegates directly to `spec_driver.orchestration` operation — no result wrapping, no exception mapping
+- 7 new tests covering delegation, return passthrough, exception propagation, default authority
+- 121 tests passing, lint clean
+
+### Module name: `spec_driver.orchestration` (not `.workflow`)
+DE-124 delivered the public API as `spec_driver.orchestration`, not `spec_driver.workflow` as DR-004 originally assumed. Updated all references.
+
 ## 2026-03-23: Design session
 
 ### Key architectural pivot

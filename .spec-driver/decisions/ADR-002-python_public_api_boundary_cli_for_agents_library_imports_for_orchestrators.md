@@ -49,7 +49,7 @@ spec-driver exposes two distinct interfaces:
 | Interface | Audience | Transport | Contract |
 |-----------|----------|-----------|----------|
 | CLI (`spec-driver review ...`) | Agents, humans | Text/JSON via stdout, exit codes | DR-108 JSON envelope |
-| Python public API (`spec_driver.workflow`) | Orchestrators (autobahn) | Direct function calls, typed returns | Re-export module |
+| Python public API (`spec_driver.orchestration`) | Orchestrators (autobahn) | Direct function calls, typed returns | Re-export module |
 
 ### 2. New `spec_driver` top-level package
 
@@ -68,15 +68,15 @@ Both `supekku` and `spec_driver` ship in the same distribution. `spec_driver` is
 
 ### 3. The re-export file is the contract
 
-If spec-driver refactors internals (renames modules, moves functions), only the re-export file changes. autobahn's imports don't break because they target `spec_driver.workflow`, not `supekku.scripts.lib.workflow.*`.
+If spec-driver refactors internals (renames modules, moves functions), only the re-export file changes. autobahn's imports don't break because they target `spec_driver.orchestration`, not `supekku.scripts.lib.workflow.*`.
 
 The public surface is narrow and auditable — approximately 30 symbols for the review operations surface.
 
-### 4. autobahn imports from `spec_driver.workflow`
+### 4. autobahn imports from `spec_driver.orchestration`
 
 ```python
 # autobahn/api/functions.py
-from spec_driver.workflow import (
+from spec_driver.orchestration import (
     read_state, build_review_index, evaluate_staleness,
     BootstrapStatus, ReviewFinding, ...
 )
@@ -101,7 +101,7 @@ The CLI commands (`spec-driver review prime`, etc.) continue to exist unchanged.
 ### Negative
 
 - autobahn is now coupled to spec-driver at the Python import level, not just at the CLI contract level — though this coupling is managed by the re-export façade
-- spec-driver gains a new maintenance obligation: the `spec_driver.workflow` re-export surface must stay current when internals change
+- spec-driver gains a new maintenance obligation: the `spec_driver.orchestration` re-export surface must stay current when internals change
 - If the repos were ever separated (different CI, different release cadence), the import boundary would need to become a versioned package dependency instead of a workspace member
 
 ### Neutral
@@ -112,7 +112,7 @@ The CLI commands (`spec-driver review prime`, etc.) continue to exist unchanged.
 ## Verification
 
 - autobahn's existing contract tests (enum transcription, model conformance) continue to validate alignment
-- Import-time failures surface immediately via `uv run python -c "from spec_driver.workflow import ..."`
+- Import-time failures surface immediately via `uv run python -c "from spec_driver.orchestration import ..."`
 - `uv run pytest` in both packages catches breakage within the same workspace
 
 ## References
