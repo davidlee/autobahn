@@ -8,7 +8,28 @@
       "Bash(gh api:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(spec-driver show:*)"
+      "Bash(spec-driver show:*)",
+      "Bash(spec-driver create:*)",
+      "Bash(find /home/david/dev/spec-driver/.spec-driver/deltas -type f -name DE-109* -o -name DR-109*)",
+      "Bash(uv run:*)",
+      "Bash(just check:*)",
+      "Bash(find /home/david/dev/autobahn -name *state* -type f)",
+      "Bash(grep -E \"\\\\.\\(yaml|yml\\)$\")",
+      "Bash(find /home/david/dev/autobahn -name *review* -type f)",
+      "Bash(find /home/david/dev/autobahn -path */supekku/* -name *.py)",
+      "Bash(find /home/david/dev/autobahn -path *blocks* -name *.py)",
+      "Bash(find /home/david/dev/autobahn/.venv -path *supekku* -type f)",
+      "Bash(python3 -c \"import supekku; print\\(supekku.__file__\\)\")",
+      "Bash(/home/david/dev/autobahn/.venv/bin/pytest tests/test_harness_claude_code.py tests/test_subprocess_backend.py tests/test_coupling.py -v 2>&1)",
+      "Bash(uv sync:*)",
+      "Bash(spec-driver sync:*)",
+      "Bash(spec-driver validate:*)",
+      "Bash(spec-driver complete:*)",
+      "Bash(grep \"^status:\" .spec-driver/deltas/DE-108*/DE-108.md .spec-driver/deltas/DE-109*/DE-109.md)",
+      "Bash(find /home/david/dev/spec-driver/.spec-driver/deltas -type f -name DR-10[89].md -o -name DR-110.md)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3:*)",
+      "Read(//home/david/dev/spec-driver/**)"
     ]
   }
 }
