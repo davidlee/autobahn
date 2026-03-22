@@ -142,7 +142,7 @@ clarification.
 
 ## Accepted ADRs
 
-
+ADR-001	accepted	ADR-001: Spec-driver schema authority and autobahn extension contract	2026-03-22
 
 ## Required Policies
 

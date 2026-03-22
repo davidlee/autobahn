@@ -334,3 +334,126 @@ deltas:
         risks:
         - description: Datetime YAML round-trip
           mitigation: VA-005 round-trip test covers this explicitly
+  DE-003:
+    kind: delta
+    status: completed
+    name: Delta - Schema reconciliation with spec-driver DE-108/109/110
+    slug: schema_reconciliation_with_spec_driver_de_108_109_110
+    updated: '2026-03-22'
+    path: .spec-driver/deltas/DE-003-schema_reconciliation_with_spec_driver_de_108_109_110/DE-003.md
+    applies_to:
+      specs: []
+      requirements: []
+    relations:
+    - type: follows
+      target: DE-002
+      attributes:
+        note: DE-002 established models; DE-003 reconciles them with upstream schema
+          changes
+    plan:
+      id: IP-003
+      overview:
+        schema: supekku.plan.overview
+        version: 1
+        plan: IP-003
+        delta: DE-003
+        revision_links:
+          aligns_with:
+          - DR-003
+        specs:
+          primary: []
+          collaborators: []
+        requirements:
+          targets: []
+          dependencies: []
+        phases:
+        - id: IP-003.PHASE-01
+      phases:
+      - schema: supekku.phase.overview
+        version: 1
+        phase: IP-003.PHASE-01
+        plan: IP-003
+        delta: DE-003
+        objective: Reconcile autobahn models with canonical spec-driver schemas (DE-108/109/110).
+          Enum removals, sessions.yaml dict model, review/finding model enrichment,
+          writer + API + reconcile updates, fixtures, contract tests.
+        entrance_criteria:
+        - DR-003 reviewed (2 adversarial rounds)
+        - ADR-001 accepted
+        exit_criteria:
+        - BootstrapStatus has 5 values (no WARMING), canonical order
+        - ReviewStatus has 4 values (no BLOCKED)
+        - SessionsFile uses dict[str, SessionEntry]; writer produces role-keyed dict
+        - FindingDisposition.authority is DispositionAuthority enum (required)
+        - Finding has required title field
+        - ReviewRound has reviewer_role, completed_at, summary, session
+        - ReviewBlock has session_scope, last_bootstrapped_at, source_handoff
+        - StalenessKeyBlock has phase_id (no state_sha)
+        - All fixtures match canonical schemas
+        - just check passes
+        verification:
+          tests:
+          - Contract tests for BootstrapStatus, ReviewStatus values
+          - Loader tests with canonical-format fixtures
+          - Writer round-trip with role-keyed dict
+          - "API tests \u2014 spawn writes dict, persist_session_statuses with dict"
+          - "Reconcile tests \u2014 orphan detection with dict"
+          - "Model tests \u2014 FindingDisposition, _REQUIRED_SESSION_FIELDS"
+          - "Regression \u2014 all existing tests updated and passing"
+          evidence:
+          - just check passes
+        tasks:
+        - id: '1.1'
+          description: Enum removals + contract tests
+        - id: '1.2'
+          description: SessionEntry/SessionsFile restructure
+        - id: '1.3'
+          description: Writer update for role-keyed dict
+        - id: '1.4'
+          description: Review/finding model updates
+        - id: '1.5'
+          description: API + reconcile updates for dict sessions
+        - id: '1.6'
+          description: Fixture updates
+        - id: '1.7'
+          description: Verify all tests pass
+        risks: []
+  DE-004:
+    kind: delta
+    status: draft
+    name: Delta - Review operations
+    slug: review_operations
+    updated: '2026-03-22'
+    path: .spec-driver/deltas/DE-004-review_operations/DE-004.md
+    applies_to:
+      specs: []
+      requirements: []
+    relations:
+    - type: follows
+      target: DE-003
+      attributes:
+        note: DE-003 reconciles models; DE-004 builds review API on top
+    - type: follows
+      target: DE-002
+      attributes:
+        note: DE-002 established orchestration patterns (spawn, reconcile, persist)
+    plan:
+      id: IP-004
+      overview:
+        schema: supekku.plan.overview
+        version: 1
+        plan: IP-004
+        delta: DE-004
+        revision_links:
+          aligns_with: []
+        specs:
+          primary: []
+          collaborators: []
+        requirements:
+          targets: []
+          dependencies: []
+        phases:
+        - id: IP-004-P01
+      phases:
+      - id: IP-004-P01
+        phase: IP-004-P01

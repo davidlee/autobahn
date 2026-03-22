@@ -1,1 +1,17 @@
-decisions: {}
+decisions:
+  ADR-001:
+    id: ADR-001
+    title: 'ADR-001: Spec-driver schema authority and autobahn extension contract'
+    status: accepted
+    path: .spec-driver/decisions/ADR-001-spec_driver_schema_authority_and_autobahn_extension_contract.md
+    summary: Establishes spec-driver as schema authority for workflow files; defines
+      conformance obligations and extension point contract for autobahn.
+    created: '2026-03-22'
+    updated: '2026-03-22'
+    reviewed: '2026-03-22'
+    deltas:
+    - DE-003
+    tags:
+    - architecture
+    - schema
+    - authority
