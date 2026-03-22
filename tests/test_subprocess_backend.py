@@ -119,3 +119,18 @@ class TestSubprocessBackend:
     )
     meta = await backend.get_metadata(handle)
     assert meta.alive is False
+
+  @pytest.mark.asyncio
+  async def test_create_inherits_parent_env_with_extras(self):
+    """F-003 regression: env vars should augment, not replace, parent env."""
+    backend = SubprocessBackend()
+    spec = LaunchSpec(
+      command=sys.executable,
+      args=["-c", "import os; assert 'PATH' in os.environ; print('ok')"],
+      env={"AUTOBAHN_TEST": "1"},
+      work_dir=Path("/tmp"),
+    )
+    await backend.create("sess-env", spec)
+    proc = backend._processes["sess-env"]
+    await proc.wait()
+    assert proc.returncode == 0

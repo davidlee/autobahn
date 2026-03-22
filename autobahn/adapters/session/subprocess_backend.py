@@ -8,6 +8,7 @@ Design authority: DR-001 §7, DEC-006.
 from __future__ import annotations
 
 import asyncio
+import os
 import time
 from datetime import UTC, datetime
 
@@ -36,7 +37,7 @@ class SubprocessBackend:
     launch: LaunchSpec,
   ) -> SessionHandle:
     """Spawn a subprocess from a LaunchSpec."""
-    env = {**launch.env} if launch.env else None
+    env = {**os.environ, **launch.env} if launch.env else None
 
     process = await asyncio.create_subprocess_exec(
       launch.command,
