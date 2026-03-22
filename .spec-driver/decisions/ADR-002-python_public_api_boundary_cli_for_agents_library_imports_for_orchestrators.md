@@ -1,7 +1,7 @@
 ---
 id: ADR-002
 title: "ADR-002: Python public API boundary \u2014 CLI for agents, library imports for orchestrators"
-status: draft
+status: accepted
 created: '2026-03-23'
 updated: '2026-03-23'
 reviewed: '2026-03-23'

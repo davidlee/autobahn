@@ -420,10 +420,10 @@ deltas:
         risks: []
   DE-004:
     kind: delta
-    status: draft
+    status: completed
     name: Delta - Review operations
     slug: review_operations
-    updated: '2026-03-22'
+    updated: '2026-03-23'
     path: .spec-driver/deltas/DE-004-review_operations/DE-004.md
     applies_to:
       specs: []
@@ -445,15 +445,25 @@ deltas:
         plan: IP-004
         delta: DE-004
         revision_links:
-          aligns_with: []
+          aligns_with:
+          - DR-004
+          - ADR-002
         specs:
           primary: []
           collaborators: []
         requirements:
           targets: []
-          dependencies: []
+          dependencies:
+          - spec-driver:DE-124
         phases:
         - id: IP-004-P01
+        - id: IP-004-P02
       phases:
-      - id: IP-004-P01
+      - plan: IP-004
+        delta: DE-004
         phase: IP-004-P01
+        status: draft
+      - plan: IP-004
+        delta: DE-004
+        phase: IP-004-P02
+        status: draft

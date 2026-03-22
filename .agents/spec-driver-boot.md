@@ -143,6 +143,7 @@ clarification.
 ## Accepted ADRs
 
 ADR-001	accepted	ADR-001: Spec-driver schema authority and autobahn extension contract	2026-03-22
+ADR-002	accepted	ADR-002: Python public API boundary — CLI for agents, library imports for orchestrators	2026-03-23
 
 ## Required Policies
 
