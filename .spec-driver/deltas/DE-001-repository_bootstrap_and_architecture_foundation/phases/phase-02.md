@@ -4,7 +4,7 @@ slug: "002-models-and-artifact-layer"
 name: "IP-001 Phase 02 — Models and artifact layer"
 created: "2026-03-22"
 updated: "2026-03-22"
-status: draft
+status: complete
 kind: phase
 ---
 
@@ -80,14 +80,14 @@ Typed pydantic models and artifact loader. After this phase, autobahn has a comp
 
 ## 4. Exit Criteria / Done When
 
-- [ ] Enums match DR-001 §6 values (core + review-related)
-- [ ] Artifact file models parse YAML fixtures: state, handoff, review-index, review-findings, sessions
-- [ ] Runtime models defined: WorkflowContext, TransitionPlan, LaunchSpec, SessionHandle, SessionMetadata, SessionOutcome, RuntimePolicy, OperationResult
-- [ ] Error taxonomy: AutobahnError hierarchy per DR-001 §6
-- [ ] Artifact loader: `load_workflow_dir(path) -> WorkflowContext`
-- [ ] Contract tests (VA-001): enum values, model parsing
-- [ ] Artifact loader tests (VA-002): happy path, missing optional files, malformed YAML
-- [ ] `just check` passes
+- [x] Enums match DR-001 §6 values (core + review-related) — 12 enums
+- [x] Artifact file models parse YAML fixtures — 5 models, all fixtures parse
+- [x] Runtime models defined — all 8 from DR-001 §6
+- [x] Error taxonomy — AutobahnError + 8 subclasses per DR-001 §6
+- [x] Artifact loader — `load_workflow_dir(path) -> WorkflowContext`
+- [x] Contract tests (VA-001) — 25 tests (enum values + model parsing)
+- [x] Artifact loader tests (VA-002) — 6 tests (happy path, missing files, malformed YAML)
+- [x] `just check` passes — 50 tests, lint+format clean
 
 ## 5. Verification
 
@@ -105,12 +105,12 @@ Typed pydantic models and artifact loader. After this phase, autobahn has a comp
 
 | Status | ID  | Description | Parallel? | Notes |
 |--------|-----|-------------|-----------|-------|
-| [ ] | 2.1 | Create YAML contract test fixtures | - | Hand-maintained, note source commit |
-| [ ] | 2.2 | Implement enums | [P] | Can parallel with 2.1 |
-| [ ] | 2.3 | Implement artifact file models | - | Depends on 2.1 (fixtures) + 2.2 (enums) |
-| [ ] | 2.4 | Implement runtime models + error taxonomy | [P] | Can parallel with 2.3 |
-| [ ] | 2.5 | Implement artifact loader | - | Depends on 2.3 |
-| [ ] | 2.6 | Verify all tests pass | - | Depends on all above |
+| [x] | 2.1 | Create YAML contract test fixtures | - | 5 files in tests/fixtures/workflow/ |
+| [x] | 2.2 | Implement enums | [P] | 12 enums, 12 contract tests |
+| [x] | 2.3 | Implement artifact file models | - | 5 file models, 13 contract tests |
+| [x] | 2.4 | Implement runtime models + error taxonomy | [P] | 8 runtime models, 8 error classes, 18 tests |
+| [x] | 2.5 | Implement artifact loader | - | load_workflow_dir(), 6 tests |
+| [x] | 2.6 | Verify all tests pass | - | 50 tests, lint+format clean |
 
 ### Task Details
 
@@ -150,14 +150,18 @@ Typed pydantic models and artifact loader. After this phase, autobahn has a comp
 
 ## 9. Decisions & Outcomes
 
-_(filled during execution)_
+- UP046/UP047 (PEP 695 type params) suppressed in ruff — pydantic `BaseModel` generic subclassing doesn't yet support PEP 695 syntax reliably
+- Fixture files include `schema` and `version` fields from spec-driver YAML but models ignore them via `extra="ignore"` (not stored as fields)
+- `WorkflowStateFile.schema_` field not mapped from YAML `schema` key — would require alias config; not needed since autobahn doesn't use the schema field
 
 ## 10. Findings / Research Notes
 
-_(filled during execution)_
+- spec-driver workflow dir at `DE-103` only has `state.yaml` — other files (handoff, review-index, review-findings, sessions) are created on-demand by workflow commands
+- `review-findings.yaml` is at version 2 (`supekku:workflow.review-findings@v2`)
+- enum values for `BootstrapStatus` and `ReviewStatus` still include values that DE-109 will remove (`warming`, `blocked`) — contract tests will catch when DE-109 lands
 
 ## 11. Wrap-up Checklist
 
-- [ ] Exit criteria satisfied
-- [ ] Verification evidence stored
+- [x] Exit criteria satisfied
+- [x] Verification evidence stored (50 tests, just check green)
 - [ ] Hand-off notes to Phase 03

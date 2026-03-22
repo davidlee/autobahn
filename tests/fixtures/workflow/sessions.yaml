@@ -1,0 +1,16 @@
+# Fixture for autobahn-owned sessions file
+# Schema: supekku:workflow.sessions@v1
+schema: supekku.workflow.sessions
+version: 1
+artifact:
+  id: DE-099
+  kind: delta
+sessions:
+  - session_id: "sess-001"
+    role: implementer
+    status: active
+    backend: subprocess
+    launched_at: "2026-03-22T14:00:00+00:00"
+    last_activity: "2026-03-22T14:30:00+00:00"
+    harness: claude_code
+    pid: 12345

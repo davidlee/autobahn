@@ -1,0 +1,19 @@
+# Fixture derived from spec-driver supekku:workflow.review-index@v1
+# Source: supekku/scripts/lib/blocks/workflow_metadata.py as of 2026-03-22
+schema: supekku.workflow.review-index
+version: 1
+artifact:
+  id: DE-099
+  kind: delta
+review:
+  bootstrap_status: warm
+  judgment_status: in_progress
+  scope: artifact
+  current_round: 1
+staleness:
+  cache_key:
+    head: abc123de
+    state_sha: def456
+timestamps:
+  created: "2026-03-22T15:30:00+00:00"
+  updated: "2026-03-22T15:30:00+00:00"

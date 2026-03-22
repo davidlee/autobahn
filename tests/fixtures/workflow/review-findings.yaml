@@ -1,0 +1,25 @@
+# Fixture derived from spec-driver supekku:workflow.review-findings@v2
+# Source: supekku/scripts/lib/blocks/workflow_metadata.py as of 2026-03-22
+schema: supekku.workflow.review-findings
+version: 2
+artifact:
+  id: DE-099
+  kind: delta
+review:
+  current_round: 1
+rounds:
+  - round: 1
+    status: in_progress
+    blocking:
+      - id: F-001
+        summary: "Missing error handling in loader"
+        status: open
+        disposition: null
+    non_blocking:
+      - id: F-002
+        summary: "Consider renaming helper function"
+        status: open
+        disposition: null
+timestamps:
+  created: "2026-03-22T16:00:00+00:00"
+  updated: "2026-03-22T16:00:00+00:00"
