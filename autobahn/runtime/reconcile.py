@@ -11,15 +11,17 @@ from pydantic import BaseModel
 
 from autobahn.adapters.session.protocol import SessionBackend
 from autobahn.artifacts.loader import load_workflow_dir
-from autobahn.models.enums import SessionStatus, WorkflowStatus
+from autobahn.models.enums import (
+  TERMINAL_WORKFLOW_STATES,
+  SessionStatus,
+  WorkflowStatus,
+)
 from autobahn.models.runtime import (
   OperationResult,
   RuntimePolicy,
   SessionHandle,
   WorkflowContext,
 )
-
-_TERMINAL_WORKFLOW_STATES = {WorkflowStatus.APPROVED}
 
 
 class DriftItem(BaseModel):
@@ -73,7 +75,7 @@ async def reconcile(
     for handle in active_handles:
       alive = await backend.is_alive(handle)
 
-      if alive and fresh_status in _TERMINAL_WORKFLOW_STATES:
+      if alive and fresh_status in TERMINAL_WORKFLOW_STATES:
         drift_items.append(
           DriftItem(
             kind="SESSION_OUTLIVED_WORKFLOW",
@@ -84,7 +86,7 @@ async def reconcile(
           )
         )
 
-      if not alive and fresh_status not in _TERMINAL_WORKFLOW_STATES:
+      if not alive and fresh_status not in TERMINAL_WORKFLOW_STATES:
         drift_items.append(
           DriftItem(
             kind="SESSION_DIED_UNEXPECTEDLY",

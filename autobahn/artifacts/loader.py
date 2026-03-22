@@ -13,6 +13,7 @@ from typing import TypeVar
 import yaml
 from pydantic import BaseModel, ValidationError
 
+from autobahn.artifacts.schema import SCHEMA_VERSIONS
 from autobahn.models.artifacts import (
   HandoffFile,
   ReviewFindingsFile,
@@ -25,11 +26,11 @@ from autobahn.models.runtime import WorkflowContext
 
 M = TypeVar("M", bound=BaseModel)
 
-_OPTIONAL_FILES: dict[str, type[BaseModel]] = {
-  "handoff.current.yaml": HandoffFile,
-  "review-index.yaml": ReviewIndexFile,
-  "review-findings.yaml": ReviewFindingsFile,
-  "sessions.yaml": SessionsFile,
+_OPTIONAL_FILES: dict[str, tuple[str, type[BaseModel]]] = {
+  "handoff.current.yaml": ("supekku.workflow.handoff", HandoffFile),
+  "review-index.yaml": ("supekku.workflow.review-index", ReviewIndexFile),
+  "review-findings.yaml": ("supekku.workflow.review-findings", ReviewFindingsFile),
+  "sessions.yaml": ("supekku.workflow.sessions", SessionsFile),
 }
 
 
@@ -63,6 +64,35 @@ def _validate(model_cls: type[M], data: dict, path: Path) -> M:
     raise ArtifactContractError(msg) from exc
 
 
+def _validate_schema_marker(
+  data: dict,
+  expected_schema: str,
+  path: Path,
+) -> None:
+  """Validate schema and version fields in YAML data.
+
+  Raises ArtifactContractError if schema is missing, unknown,
+  or version not in the supported set.
+  """
+  schema = data.get("schema")
+  version = data.get("version")
+
+  if schema is None:
+    msg = f"Missing 'schema' field in {path}"
+    raise ArtifactContractError(msg)
+
+  if schema != expected_schema:
+    msg = f"Unknown schema '{schema}' in {path}, expected '{expected_schema}'"
+    raise ArtifactContractError(msg)
+
+  supported = SCHEMA_VERSIONS.get(expected_schema, frozenset())
+  if version not in supported:
+    msg = (
+      f"Unsupported version {version} in {path}, expected one of {sorted(supported)}"
+    )
+    raise ArtifactContractError(msg)
+
+
 def load_workflow_dir(workflow_dir: Path) -> WorkflowContext:
   """Load a spec-driver workflow directory into a WorkflowContext.
 
@@ -83,13 +113,15 @@ def load_workflow_dir(workflow_dir: Path) -> WorkflowContext:
     raise ArtifactParseError(msg)
 
   state_data = _read_yaml(state_path)
+  _validate_schema_marker(state_data, "supekku.workflow.state", state_path)
   state = _validate(WorkflowStateFile, state_data, state_path)
 
   optionals: dict[str, BaseModel | None] = {}
-  for filename, model_cls in _OPTIONAL_FILES.items():
+  for filename, (expected_schema, model_cls) in _OPTIONAL_FILES.items():
     filepath = workflow_dir / filename
     if filepath.exists():
       data = _read_yaml(filepath)
+      _validate_schema_marker(data, expected_schema, filepath)
       optionals[filename] = _validate(model_cls, data, filepath)
     else:
       optionals[filename] = None

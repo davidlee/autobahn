@@ -36,6 +36,13 @@ class WorkflowStatus(StrEnum):
   BLOCKED = "blocked"
 
 
+TERMINAL_WORKFLOW_STATES: frozenset[WorkflowStatus] = frozenset(
+  {
+    WorkflowStatus.APPROVED,
+  }
+)
+
+
 class PhaseStatus(StrEnum):
   """Phase execution status. Source: PHASE_STATUS_VALUES L54."""
 

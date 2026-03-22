@@ -5,11 +5,9 @@ Design authority: DR-001 §8 (transition_from_handoff).
 
 from __future__ import annotations
 
-from autobahn.models.enums import WorkflowStatus
+from autobahn.models.enums import TERMINAL_WORKFLOW_STATES
 from autobahn.models.errors import PreconditionError
 from autobahn.models.runtime import TransitionPlan, WorkflowContext
-
-_TERMINAL_STATES = {WorkflowStatus.APPROVED}
 
 
 def transition_from_handoff(context: WorkflowContext) -> TransitionPlan:
@@ -20,7 +18,7 @@ def transition_from_handoff(context: WorkflowContext) -> TransitionPlan:
   """
   current_status = context.state.workflow.status
 
-  if current_status in _TERMINAL_STATES:
+  if current_status in TERMINAL_WORKFLOW_STATES:
     msg = f"Workflow is in terminal state: {current_status}"
     raise PreconditionError(msg)
 

@@ -46,12 +46,49 @@ class TestLoadWorkflowDir:
       load_workflow_dir(tmp_path)
 
   def test_invalid_schema_raises(self, tmp_path):
-    # Valid YAML but missing required fields
-    (tmp_path / "state.yaml").write_text("foo: bar\n")
+    # Valid YAML but wrong schema — hits schema validation first
+    (tmp_path / "state.yaml").write_text(
+      "schema: supekku.workflow.state\nversion: 1\nfoo: bar\n"
+    )
     with pytest.raises(ArtifactContractError, match="Schema contract violation"):
       load_workflow_dir(tmp_path)
 
   def test_non_mapping_yaml_raises(self, tmp_path):
     (tmp_path / "state.yaml").write_text("- just\n- a\n- list\n")
     with pytest.raises(ArtifactParseError, match="Expected mapping"):
+      load_workflow_dir(tmp_path)
+
+
+class TestSchemaValidation:
+  """Schema marker validation (DR-002 §4.1, DEC-020)."""
+
+  def test_missing_schema_field(self, tmp_path):
+    (tmp_path / "state.yaml").write_text("foo: bar\n")
+    with pytest.raises(ArtifactContractError, match="Missing 'schema' field"):
+      load_workflow_dir(tmp_path)
+
+  def test_wrong_schema_marker(self, tmp_path):
+    (tmp_path / "state.yaml").write_text("schema: supekku.workflow.wrong\nversion: 1\n")
+    with pytest.raises(ArtifactContractError, match="Unknown schema"):
+      load_workflow_dir(tmp_path)
+
+  def test_unsupported_version(self, tmp_path):
+    (tmp_path / "state.yaml").write_text(
+      "schema: supekku.workflow.state\nversion: 99\n"
+    )
+    with pytest.raises(ArtifactContractError, match="Unsupported version"):
+      load_workflow_dir(tmp_path)
+
+  def test_optional_file_wrong_schema(self, tmp_path):
+    shutil.copy(FIXTURES / "state.yaml", tmp_path / "state.yaml")
+    (tmp_path / "sessions.yaml").write_text(
+      "schema: supekku.workflow.wrong\nversion: 1\n"
+    )
+    with pytest.raises(ArtifactContractError, match="Unknown schema"):
+      load_workflow_dir(tmp_path)
+
+  def test_optional_file_missing_schema(self, tmp_path):
+    shutil.copy(FIXTURES / "state.yaml", tmp_path / "state.yaml")
+    (tmp_path / "sessions.yaml").write_text("artifact:\n  id: X\n  kind: delta\n")
+    with pytest.raises(ArtifactContractError, match="Missing 'schema' field"):
       load_workflow_dir(tmp_path)

@@ -5,6 +5,7 @@ Design authority: DR-001 §8.
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from pathlib import Path
 
@@ -105,10 +106,12 @@ async def observe_session(
   poll_interval: float = 5.0,
 ) -> AsyncIterator[SessionMetadata]:
   """Yield session metadata until session ends."""
-  supervisor = Supervisor.__new__(Supervisor)
-  supervisor.backend = backend
-  async for meta in supervisor.observe(handle, poll_interval=poll_interval):
+  while True:
+    meta = await backend.get_metadata(handle)
     yield meta
+    if not meta.alive:
+      return
+    await asyncio.sleep(poll_interval)
 
 
 async def terminate_session(

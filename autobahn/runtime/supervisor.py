@@ -1,12 +1,9 @@
 """Supervisor — coordinates harness adapter and session backend.
 
-Design authority: DR-001 §7 (composition).
+Design authority: DR-001 §7 (composition), DR-002 §4.2/§4.3.
 """
 
 from __future__ import annotations
-
-import asyncio
-from collections.abc import AsyncIterator
 
 from autobahn.adapters.harness.protocol import HarnessAdapter
 from autobahn.adapters.session.protocol import SessionBackend
@@ -14,7 +11,6 @@ from autobahn.models.runtime import (
   OperationResult,
   RuntimePolicy,
   SessionHandle,
-  SessionMetadata,
   SessionOutcome,
   TransitionPlan,
   WorkflowContext,
@@ -54,21 +50,14 @@ class Supervisor:
         error=f"Failed to create session: {exc}",
       )
 
+    # Patch metadata — backend doesn't have orchestration context
+    handle = handle.model_copy(
+      update={
+        "role": plan.target_role,
+        "artifact_id": context.artifact_id,
+      }
+    )
     return OperationResult(success=True, value=handle)
-
-  async def observe(
-    self,
-    handle: SessionHandle,
-    *,
-    poll_interval: float = 5.0,
-  ) -> AsyncIterator[SessionMetadata]:
-    """Yield session metadata until session ends."""
-    while True:
-      meta = await self.backend.get_metadata(handle)
-      yield meta
-      if not meta.alive:
-        return
-      await asyncio.sleep(poll_interval)
 
   async def terminate(
     self,
